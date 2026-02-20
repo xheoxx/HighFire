@@ -1,32 +1,110 @@
-# Plan for creating the Godot spellcraft arena
+# Plan – HighFire Spellcraft Arena
+
+## Referenz-Dokumente
+| Dokument | Inhalt |
+|----------|--------|
+| `DESIGN.md` | Vollständiges Design: Visuals, Combos, Crafting, Balance, Kamera, Tutorial, Accessibility |
+| `moodboard.md` | Bildgenerator-Prompts für 3 Stimmungswelten |
+| `AGENTS.md` | Persona, Sprache, Koordinationsregeln für Agenten |
+
+---
 
 ## Objective
-Craft a fast-paced multiplayer arena that relies on Godot primitives (ColorRects, Labels, procedural materials) while enabling local-first and future online multiplayer, spell/weapon crafting, controller-motion combos, target switching, and destructible terrain—all orchestrated from a single `MainArena` scene.
+Schneller, lokaler Multiplayer-Arena-Fighter (Steam-Ziel) mit Spellcrafting, Weaponcrafting, Controller-Motion-Combos, Target-Locking, Line-of-Sight und zerstörbarem Terrain – vollständig in Godot 4 mit Primitiven (ColorRect, Line2D, Labels, GPUParticles2D), keine externen Assets nötig.
 
-## Central Planning Document
-This file will serve as the living blueprint. Each section below can expand into AGENTS.md later, where we describe how autonomous agents can split the work into coordinated phases.
+---
 
-## High-Level Phases
-1. **Discovery & Input Language** – Define player actions, feasible controller motion combos, crafting recipes, and desired feel (speed, telegraphing, damage thresholds). Output tables of combos, target behaviors, and crafting outcomes.
-2. **Core Scene & Movement** – Build the arena layout, player nodes, input maps, and motion physics. This includes spawning a basic terrain grid with destructible chunks, setting up split/shared-screen cameras, and wiring movement/target lock visuals.
-3. **Combat Systems** – Script spell/weapon crafting, combo detection, damage application, and line-of-sight checks. Separate subsystems for spell composition, weapon binding, and attack execution so they can be tuned independently.
-4. **Multiplayer & State Sync** – Create local input handling per player and the shared arena state manager; design hooks for future netcode (e.g., synced player positions, arena events). Define scoring/round/state transitions.
-5. **Polish & Feedback** – Implement UI feedback, sound cues (via simple ToneGenerators), destruction VFX (color tweens, animated ColorRects), and restart/progression logic.
+## Phasen-Übersicht
 
-## Parallel Systems for Agent Workstreams
-Agents can work concurrently on the following streams per phase:
+### Phase 0 – Design Foundation ✅ ABGESCHLOSSEN
+Alle Design-Entscheidungen getroffen und in `DESIGN.md` dokumentiert:
+- Combo-Grammatik & Motion-Input-Lexikon
+- Spellcrafting-Rezepte (6 Elemente, Kombinationen)
+- Weaponcrafting-Archetypen & Upgrade-Nodes
+- Balance-Parameter (HP, Schaden, Cooldowns)
+- Arena-Layout-Varianten (4 Maps)
+- Kamera-System (Shared/Split-Screen)
+- Game Feel / Juice
+- Sound-Design
+- Spieler-Farbidentität
+- Arena State Machine
+- Tutorial-Flow
+- Accessibility
 
-| Stream | Description | Dependencies |
-|--------|-------------|--------------|
-| **Scene/Nodes** | Layout of arena grid, destructible terrain, target indicators, cameras, HUD nodes. | Phase 1 outputs (combo definitions) for indicator labels. |
-| **Player Input & Movement** | Player controller mapping, motion parsing, target locking/switching, cooldowns. | Scene structure to attach scripts. |
-| **Combat & Crafting** | Spell/weapon crafting UI/data, combo recognition logic, damage/line-of-sight, destructible terrain interactions. | Input system for motion combos. |
-| **Multiplayer State** | Local split/shared-screen coordination, arena state manager, scoreboard, matchflow. | Player movement + combat events. |
-| **Feedback & Polish** | UI updates, color tweens, sound cues, simple particle effects using shaders or Material overrides. | Combat events for triggers. |
+---
 
-Agents working in parallel should hold regular checkpoints to update the central document with data models (combo tables, crafting recipes, target priority rules) to keep other streams aligned.
+### Phase 1 – Core Scene & Movement
+**Ziel**: Spielbares Grundgerüst mit Bewegung, Dodge, Target-Lock in einer Arena.
 
-## Next Steps
-- Finalize workspace for phase details and assign create/update instructions for AGENTS.md.
-- Expand each stream with specific tasks (e.g., "Design combo grammar", "Prototype destructible tile damage") and note which agents can own them.
-- Gather references for motion combo recognition (e.g., motion buffers, gestures) to seed the Combat stream before scripting.
+**Parallel-Streams:**
+
+| Stream | Aufgaben | Abhängigkeiten |
+|--------|---------|----------------|
+| **A: Scene-Setup** | `MainArena`-Szene, Tile-Grid (32x32), Spieler-Nodes, Kameras, HUD-Canvas | – |
+| **B: Player Movement** | Bewegung, Dodge, Collision, Spieler-Farbidentität | Stream A |
+| **C: Target System** | Target-Lock, Zielwechsel, HUD-Ringe (Cyan/Rot), Line-of-Sight | Stream A+B |
+| **D: Terrain Base** | Tile-States (Intact/Cracked/Destroyed), Unterleuchten, Tile-Destruktion | Stream A |
+
+---
+
+### Phase 2 – Combat & Crafting
+**Ziel**: Vollständige Kampfschleife mit Spells, Combos und Waffen.
+
+**Parallel-Streams:**
+
+| Stream | Aufgaben | Abhängigkeiten |
+|--------|---------|----------------|
+| **A: Motion-Input Parser** | Joystick-Gesten-Erkennung, Timing-Fenster, Combo-Chain-Visual | Phase 1 komplett |
+| **B: Spellcrafting** | Element-Sammlung, Crafting-UI, Rezept-Logik, Spell-Slots | Stream A |
+| **C: Weaponcrafting** | Waffen-Archetypen, Upgrade-Nodes, Material-Sammlung | Stream A |
+| **D: Damage & LOS** | Schadensklassen, Hit-Detection, Line-of-Sight-Raycast | Phase 1 komplett |
+
+---
+
+### Phase 3 – Multiplayer & State
+**Ziel**: Vollständige lokale Multiplayer-Runde mit Scoring und Round-Flow.
+
+**Parallel-Streams:**
+
+| Stream | Aufgaben | Abhängigkeiten |
+|--------|---------|----------------|
+| **A: ArenaStateManager** | State Machine (Lobby→Countdown→Combat→End), Signals | Phase 2 komplett |
+| **B: Local Multiplayer** | Input-Mapping pro Spieler, Split/Shared-Screen-Kamera-Logik | Stream A |
+| **C: Scoring & HUD** | Punkte, Leben, Rundenanzahl, Score-Screen | Stream A |
+| **D: Network Hooks** | Abstraktion für späteres Online-Netcode (Multiplayer-API vorbereiten) | Stream A+B |
+
+---
+
+### Phase 4 – Polish & Feedback
+**Ziel**: Spielgefühl, Sound, VFX, Tutorial und Accessibility.
+
+**Parallel-Streams:**
+
+| Stream | Aufgaben | Abhängigkeiten |
+|--------|---------|----------------|
+| **A: Game Feel** | Screen Shake, Hit-Pause, Slow-Motion, Controller-Rumble | Phase 3 komplett |
+| **B: Sound** | AudioStreamGenerator-Töne, Pitch-Shift für Combos, Spatial Audio | Phase 2 komplett |
+| **C: VFX** | Destruction-Partikel, Spell-Trails (Line2D), Combo-Rune-Chain | Phase 2 komplett |
+| **D: Tutorial** | 9-Schritte-Tutorial-Flow, Highlight-System, Skip-Option | Phase 3 komplett |
+| **E: Accessibility** | Farbenblindmodi, Combo-Assist, Remapping, Textgröße | Phase 4 A-D |
+
+---
+
+### Phase 5 – Steam-Vorbereitung
+**Ziel**: Release-fähig auf Steam.
+
+| Aufgabe | Beschreibung |
+|---------|-------------|
+| Arena-Varianten | Alle 4 Maps implementiert und spielbar |
+| Online-Multiplayer | Netcode via Godot High-Level Multiplayer API |
+| Steam-Integration | Steamworks SDK, Achievements, Leaderboards |
+| Launcher & Build | Export für Windows/Linux, Godot-Export-Templates |
+| QA & Balancing | Playtesting, Parameter-Tuning basierend auf Feedback |
+
+---
+
+## Koordinationsregeln für Agenten
+- Jeder Agent arbeitet an einem Stream und hält seinen Output in einem dedizierten Unterordner (`/scenes/`, `/scripts/`, `/ui/`, `/audio/`)
+- Änderungen an shared Interfaces (z. B. `ArenaStateManager`-Signals) werden zuerst in `DESIGN.md` dokumentiert, bevor implementiert wird
+- Commits immer mit Stream-Präfix: `[A] feat: ...`, `[B] fix: ...`
+- Bei Abhängigkeitskonflikten: Stream blockiert sich selbst und signalisiert via GitHub Issue
