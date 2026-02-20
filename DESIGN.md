@@ -1,195 +1,195 @@
-# Arena Visual & Gameplay Design Document
+# Arena Visual & Gameplay Design Dokument
 
-Purpose: This document translates three visual moodboards into concrete, system-oriented design guidance suitable for use as structured input for GitHub Copilot when implementing the game in Godot. The focus is on determinism, modularity, readability, and implementation using primitives (ColorRect, Line2D, Labels, GPUParticles2D).
-
----
-
-## Moodboard 01 – Arcane Foundry (Arena Atmosphere)
-
-### Design Intent
-
-Create a ritualistic, industrial-fantasy arena that feels powerful and deliberate. The arena should communicate importance and danger without visual noise. The center of the arena must always read as the primary gameplay focal point.
-
-### Visual Pillars
-
-* Dark, minimal base with high-contrast emissive elements
-* Strong warm vs cool color contrast
-* Abstract geometry over detailed textures
-* Magic represented as precise energy, not chaos
-
-### Arena Floor
-
-* Base: dark obsidian-like surface (flat color or subtle gradient)
-* Rune cracks: thin emissive lines embedded in the floor
-
-  * Colors: electric blue and arcane violet
-  * Behavior: slow pulse (sine-based alpha or width modulation)
-  * Implementation: Line2D or thin ColorRect strips with additive blending
-
-### Arena Center (Spell Foundry)
-
-* Floating glyph shapes orbiting a central point
-* Glyphs rotate slowly and never fully stop
-* Color encodes spell state or crafting phase
-
-  * Blue = control / neutral
-  * Violet = transformation
-  * Amber = overcharge / instability
-
-### Characters
-
-* Characters rendered primarily as silhouettes
-* Only hands, weapons, and active spell components glow
-* Weapons are hybrid shapes (staff + blade), built from simple geometry
-
-### Fog and Depth
-
-* Volumetric feel without real volumetrics
-* Semi-transparent purple fog layers at arena edges
-* Center remains visually clear at all times
-
-### Walls and Arena Frame
-
-* Metallic, segmented walls
-* Embedded arcane circuitry lines (emissive)
-* Rim lighting effect:
-
-  * Warm amber from outer/top edges
-  * Cool blue from inner/bottom edges
-
-### Technical Constraints
-
-* Single arena scene
-* No texture dependency required
-* All effects achievable with CanvasItem-based nodes
+Zweck: Dieses Dokument übersetzt drei visuelle Moodboards in konkretes, systemorientiertes Design-Wissen, das als strukturierter Input für GitHub Copilot bei der Implementierung des Spiels in Godot genutzt wird. Schwerpunkte sind Determinismus, Modularität, Lesbarkeit und Umsetzung mit Primitiven (ColorRect, Line2D, Labels, GPUParticles2D).
 
 ---
 
-## Moodboard 02 – Destructible Rift Grounds (Gameplay Moment)
+## Moodboard 01 – Arcane Foundry (Arena-Atmosphäre)
 
-### Design Intent
+### Design-Absicht
 
-Showcase high-speed combat and large-scale destruction while preserving clarity. The arena itself is an active participant in combat and communicates danger states clearly.
+Eine ritualhafte, industriell-fantastische Arena erschaffen, die kraftvoll und bewusst wirkt. Die Arena soll Wichtigkeit und Gefahr ohne visuelles Rauschen kommunizieren. Das Zentrum der Arena muss stets als primärer Gameplay-Fokuspunkt lesbar sein.
 
-### Visual Pillars
+### Visuelle Säulen
 
-* Controlled chaos
-* Strong telegraphing of danger and destruction
-* Speed communicated through motion cues, not camera blur
+* Dunkle, minimale Basis mit hochkontrastreichen emissiven Elementen
+* Starker Warm-Kalt-Farbkontrast
+* Abstrakte Geometrie statt detaillierter Texturen
+* Magie dargestellt als präzise Energie, nicht als Chaos
 
-### Destructible Floor
+### Arena-Boden
 
-* Arena floor composed of modular tiles
+* Basis: dunkle Obsidian-artige Fläche (flache Farbe oder subtiler Verlauf)
+* Runen-Risse: dünne emissive Linien im Boden eingebettet
 
-* Tiles can transition through states:
+  * Farben: elektrisches Blau und arkanes Violett
+  * Verhalten: langsames Pulsieren (sinusbasierte Alpha- oder Breitenmodulation)
+  * Umsetzung: Line2D oder dünne ColorRect-Streifen mit additivem Blending
 
-  * Intact
-  * Cracked (warning)
-  * Destroyed (hole / hazard)
+### Arena-Zentrum (Spell Foundry)
 
-* Underlayer glow:
+* Schwebende Glyphen-Formen, die um einen Mittelpunkt kreisen
+* Glyphen drehen sich langsam und kommen nie vollständig zum Stillstand
+* Farbe kodiert Spell-Zustand oder Crafting-Phase
 
-  * Bright rift orange visible through cracks
+  * Blau = Kontrolle / neutral
+  * Violett = Transformation
+  * Amber = Überlastung / Instabilität
 
-### Destruction Feedback
+### Charaktere
 
-* Explosions push debris upward (visual only)
-* Debris can be non-physical particles
-* Impact craters:
+* Charaktere werden hauptsächlich als Silhouetten dargestellt
+* Nur Hände, Waffen und aktive Spell-Komponenten leuchten
+* Waffen sind Hybridformen (Stab + Klinge), aus einfacher Geometrie aufgebaut
 
-  * Circular neon decals
-  * Fade out over time to show timing windows
+### Nebel und Tiefe
 
-### Architecture
+* Volumetrisches Gefühl ohne echtes Volumetrics
+* Halbtransparente violette Nebelschichten an den Arena-Rändern
+* Das Zentrum bleibt stets visuell klar
 
-* Pillars and structures break in segments
-* Each segment is an independent node
-* Electric arcs jump between unstable segments
+### Wände und Arena-Rahmen
 
-  * Used as visual hazard telegraphing
+* Metallische, segmentierte Wände
+* Eingebettete arkane Schaltkreislinien (emissiv)
+* Randbeleuchtungseffekt:
 
-### Players and Motion
+  * Warmes Amber von den äußeren/oberen Kanten
+  * Kühles Blau von den inneren/unteren Kanten
 
-* Player readability prioritized over environment
-* Slight motion streaks or afterimages
-* Color identity stronger than silhouette detail
+### Technische Einschränkungen
 
-### Target Lock System
-
-* HUD rings around opponents
-
-  * Cyan = current target
-  * Red = hostile / threat
-* Rings pulse or rotate subtly to stay visible during chaos
-
-### Lighting and Space
-
-* Overhead spotlight defines combat focus zone
-* Dust clouds as large translucent layers
-* Background reduced to distant glowing points (city ruins)
-
-### Technical Constraints
-
-* No physics-heavy destruction required
-* Destruction is state-based, not simulation-based
-* Multiplayer-safe and deterministic
+* Einzelne Arena-Szene
+* Keine Textur-Abhängigkeit erforderlich
+* Alle Effekte mit CanvasItem-basierten Nodes umsetzbar
 
 ---
 
-## Moodboard 03 – Crafted Combo Flow (Crafting & Input Feeling)
+## Moodboard 02 – Destructible Rift Grounds (Gameplay-Moment)
 
-### Design Intent
+### Design-Absicht
 
-Make player input visible, expressive, and satisfying. Crafting and combos should feel like physical actions, not menu interactions.
+Hochgeschwindigkeitskampf und großflächige Zerstörung zeigen, ohne die Übersichtlichkeit zu verlieren. Die Arena selbst ist ein aktiver Teilnehmer im Kampf und kommuniziert Gefahrenzustände klar.
 
-### Visual Pillars
+### Visuelle Säulen
 
-* Input equals magic
-* Motion creates meaning
-* Feedback is immediate and readable
+* Kontrolliertes Chaos
+* Starkes Telegraphieren von Gefahr und Zerstörung
+* Geschwindigkeit durch Bewegungshinweise kommuniziert, nicht durch Kameraverwischung
 
-### Controller and Input Visualization
+### Zerstörbarer Boden
 
-* Thumbstick and motion inputs generate visible trails
-* Trails form arcs, spirals, and angles
-* The motion itself defines the spell signature
+* Arena-Boden aus modularen Tiles aufgebaut
 
-### Combo Chains
+* Tiles können durch Zustände wechseln:
 
-* Combo inputs visualized as a rune chain
-* Each successful input adds a new rune element
-* Timing quality affects visual stability:
+  * Intakt
+  * Gerissen (Warnung)
+  * Zerstört (Loch / Gefahr)
 
-  * Clean timing = solid glow
-  * Poor timing = flicker or distortion
+* Unterlage-Glühen:
 
-### Crafting HUD
+  * Helles Rift-Orange sichtbar durch Risse
 
-* Floating holographic panels
-* Shows:
+### Zerstörungs-Feedback
 
-  * Spell ingredient slots
-  * Weapon upgrade nodes
-* Panels use lines, icons, and color states only
-* No dense text or decorative frames
+* Explosionen schleudern Trümmer aufwärts (nur visuell)
+* Trümmer können nicht-physikalische Partikel sein
+* Einschlagkrater:
 
-### Visual Focus
+  * Kreisförmige Neon-Decals
+  * Verblassen über Zeit, um Timing-Fenster anzuzeigen
 
-* Background gameplay remains visible but blurred/desaturated
-* Input and HUD elements remain crisp and high contrast
+### Architektur
 
-### Color Language
+* Säulen und Strukturen brechen in Segmenten
+* Jedes Segment ist ein eigenständiger Node
+* Elektrische Bögen springen zwischen instabilen Segmenten
 
-* Primary gradient: purple to orange
-* Input trails inherit current spell color
-* Failed inputs briefly flash warning hues
+  * Zur visuellen Gefahren-Telegraphierung eingesetzt
 
-### Technical Constraints
+### Spieler und Bewegung
 
-* Motion trails implemented with Line2D and lifetime decay
-* Combo chain implemented with UI containers and animations
-* HUD always active via CanvasLayer
-* Fully deterministic for multiplayer
+* Spieler-Lesbarkeit hat Vorrang vor der Umgebung
+* Leichte Bewegungsschlieren oder Nachbilder
+* Farbidentität stärker als Silhouetten-Detail
+
+### Zielerfassungssystem
+
+* HUD-Ringe um Gegner
+
+  * Cyan = aktuelles Ziel
+  * Rot = feindlich / Bedrohung
+* Ringe pulsieren oder drehen sich subtil, um bei Chaos sichtbar zu bleiben
+
+### Beleuchtung und Raum
+
+* Deckenstrahler definiert die Kampf-Fokuszone
+* Staubwolken als große, halbtransparente Schichten
+* Hintergrund reduziert auf ferne leuchtende Punkte (Stadtruinen)
+
+### Technische Einschränkungen
+
+* Keine physikintensive Zerstörung erforderlich
+* Zerstörung ist zustandsbasiert, nicht simulationsbasiert
+* Multiplayer-sicher und deterministisch
+
+---
+
+## Moodboard 03 – Crafted Combo Flow (Crafting & Input-Gefühl)
+
+### Design-Absicht
+
+Spieler-Inputs sichtbar, ausdrucksstark und befriedigend machen. Crafting und Combos sollen sich wie physische Handlungen anfühlen, nicht wie Menü-Interaktionen.
+
+### Visuelle Säulen
+
+* Input ist Magie
+* Bewegung schafft Bedeutung
+* Feedback ist sofort und lesbar
+
+### Controller und Input-Visualisierung
+
+* Thumbstick- und Motion-Inputs erzeugen sichtbare Trails
+* Trails bilden Bögen, Spiralen und Winkel
+* Die Bewegung selbst definiert die Spell-Signatur
+
+### Combo-Ketten
+
+* Combo-Inputs als Runen-Kette visualisiert
+* Jeder erfolgreiche Input fügt ein neues Runen-Element hinzu
+* Timing-Qualität beeinflusst visuelle Stabilität:
+
+  * Sauberes Timing = stabiles Glühen
+  * Schlechtes Timing = Flackern oder Verzerrung
+
+### Crafting-HUD
+
+* Schwebende holographische Panels
+* Zeigt:
+
+  * Spell-Zutaten-Slots
+  * Waffen-Upgrade-Nodes
+* Panels verwenden nur Linien, Icons und Farbzustände
+* Kein dichter Text oder dekorative Rahmen
+
+### Visueller Fokus
+
+* Hintergrund-Gameplay bleibt sichtbar, aber unscharf/entsättigt
+* Input- und HUD-Elemente bleiben scharf und hochkontrastreich
+
+### Farbsprache
+
+* Primärer Verlauf: Violett zu Orange
+* Input-Trails übernehmen die aktuelle Spell-Farbe
+* Fehlgeschlagene Inputs blinken kurz in Warnfarben
+
+### Technische Einschränkungen
+
+* Motion-Trails mit Line2D und zeitbasiertem Abbau implementiert
+* Combo-Kette mit UI-Containern und Animationen umgesetzt
+* HUD immer aktiv über CanvasLayer
+* Vollständig deterministisch für Multiplayer
 
 ---
 
@@ -549,20 +549,20 @@ Spieler lernen durch Tun, nicht durch Lesen. Jede Mechanic wird isoliert eingef�
 
 ---
 
-## Cross-Moodboard Design Rules
+## Übergreifende Design-Regeln
 
-* Readability over realism
-* Color encodes gameplay state
-* Everything animated has a gameplay reason
-* No visual element is purely decorative
-* Systems-first visuals: every effect maps to a state
+* Lesbarkeit über Realismus
+* Farbe kodiert Spielzustand
+* Alles Animierte hat einen Gameplay-Grund
+* Kein visuelles Element ist rein dekorativ
+* Systeme-zuerst-Visuals: jeder Effekt entspricht einem Zustand
 
-## Copilot Usage Notes
+## Copilot-Nutzungshinweise
 
-This document is intended to be used as:
+Dieses Dokument dient als:
 
-* High-level context for Copilot when generating Godot scripts
-* A reference for naming conventions (ArenaCenter, DestructibleTile, ComboChain)
-* A constraint guide to prevent overengineering or visual noise
+* Übergeordneter Kontext für Copilot beim Generieren von Godot-Skripten
+* Referenz für Namenskonventionen (ArenaCenter, DestructibleTile, ComboChain)
+* Einschränkungs-Leitfaden zur Vermeidung von Überentwicklung oder visuellem Rauschen
 
-End of document.
+Ende des Dokuments.
