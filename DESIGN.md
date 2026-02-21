@@ -150,7 +150,7 @@ Spieler-Inputs sichtbar, ausdrucksstark und befriedigend machen. Crafting und Co
 
 ### Controller und Input-Visualisierung
 
-* Thumbstick- und Motion-Inputs erzeugen sichtbare Trails
+* D-Pad- und Motion-Inputs erzeugen sichtbare Trails (bei Analogstick: auch Analogstick-Inputs)
 * Trails bilden Bögen, Spiralen und Winkel
 * Die Bewegung selbst definiert die Spell-Signatur
 
@@ -288,28 +288,100 @@ Motion-Combos sind die Sprache des Spiels. Jede Bewegung hat eine Bedeutung – 
 
 | Symbol | Motion | Beschreibung |
 |--------|--------|--------------|
-| ↑ | Stick gerade hoch | Aufwärtsstoß |
-| ↓ | Stick gerade runter | Stampf / Erdanker |
-| → | Stick gerade rechts | Vorwärtsstoß (relativ zu Spieler) |
-| ← | Stick gerade links | Rückzug / Konter-Setup |
+| ↑ | D-Pad oben | Aufwärtsstoß |
+| ↓ | D-Pad unten | Stampf / Erdanker |
+| → | D-Pad rechts | Vorwärtsstoß (relativ zu Spieler) |
+| ← | D-Pad links | Rückzug / Konter-Setup |
 | ↓→ | Viertelkreis vorwärts | Klassischer Feuerball-Input |
 | ↓← | Viertelkreis rückwärts | Defensiv-Spell / Schild |
 | →↓→ | Z-Motion | Schwere Kombo-Finale |
-| ○ | Vollkreis | Ladeangriff / AoE-Spell |
 | ←→ | Hin-und-Her | Schnell-Angriff / Burst |
+
+> **Hinweis**: Der Vollkreis (○) aus analogen Fighting-Games entfällt – auf D-Pad ist er unpräzise. Stattdessen wird ←→ (Hin-und-Her) für AoE/Ladeangriffe verwendet. Falls ein Analogstick vorhanden ist, wird er als alternative Eingabe für alle Motions akzeptiert (Analogwert-Deadzone: 0.3).
 
 ### Combo-Struktur
 Combos bestehen aus **3 Ebenen**:
-1. **Motion** (Joystick-Geste) – definiert Spell-Typ
+1. **Motion** (D-Pad-Geste / Analogstick-Geste) – definiert Spell-Typ
 2. **Element** (welcher Spell gerade gecharged ist) – definiert Schadenstyp
-3. **Finish-Button** (Schultertaste L2/R2) – löst aus
+3. **Finish-Button** (`B`) – löst aus
 
-Beispiel: `↓→` + `[Fire-Element aktiv]` + `R2` = Feuerball geradeaus
+Beispiel: `↓→` + `[Fire-Element aktiv]` + `B` = Feuerball geradeaus
 
 ### Timing-Fenster
 * Motion muss innerhalb von **0,4 Sekunden** abgeschlossen sein
 * Zu langsam: Input verfällt, kein Verbrauch von Spell-Ressourcen
 * Perfect-Timing (< 0,15s): Bonus-Effekt (z. B. größerer AoE, mehr Schaden)
+
+---
+
+## Controller-Layout & Input-Architektur
+
+### Design-Absicht
+SNES-Layout als Referenz: Das Spiel muss mit nur 12 Inputs (D-Pad 4×, A/B/X/Y, L/R, Start/Select) vollständig spielbar sein. Wenn ein moderner Controller mit Analogsticks erkannt wird, werden diese als **alternative Eingabe** für Bewegung und Motion-Inputs akzeptiert – aber nie vorausgesetzt.
+
+### Referenz-Controller: SNES-Layout
+
+```
+         ┌───┐     ┌───┐
+         │ L │     │ R │
+         └───┘     └───┘
+    ┌─────────────────────┐
+    │                     │
+    │  ┌───┐     ╭─╮     │
+    │  │ ↑ │     │X│     │
+    │ ┌┴┐ ┌┴┐  ╭─╯ ╰─╮   │
+    │ │←│ │→│  │Y│ │A│   │
+    │ └┬┘ └┬┘  ╰─╮ ╭─╯   │
+    │  │ ↓ │     │B│     │
+    │  └───┘     ╰─╯     │
+    │  [Select]  [Start]  │
+    └─────────────────────┘
+```
+
+### Button-Belegung (Standard)
+
+| Button | Funktion | Godot-Action-Name |
+|--------|----------|-------------------|
+| **D-Pad** | Bewegung (8 Richtungen) + Motion-Input-Gesten | `move_up`, `move_down`, `move_left`, `move_right` |
+| **B** | Angriff / Spell auslösen (Finish-Button) | `action_attack` |
+| **A** | Dodge / Ausweichen | `action_dodge` |
+| **Y** | Element wechseln (tippen) / Spellcrafting-Menü (halten 0.5s) | `action_element` |
+| **X** | Waffen-Spezial / Interaktion | `action_special` |
+| **L** | Target-Lock / Zielwechsel links | `target_prev` |
+| **R** | Target-Lock / Zielwechsel rechts | `target_next` |
+| **Start** | Pause-Menü | `menu_pause` |
+| **Select** | Scoreboard / Info-Overlay | `menu_info` |
+
+### Analog-Erweiterung (wenn verfügbar)
+
+| Input | Funktion | Godot-Action |
+|-------|----------|-------------|
+| **Linker Stick** | Alternative Bewegung + Motion-Inputs (Deadzone: 0.3) | gleiche Actions wie D-Pad |
+| **Rechter Stick** | Manuelle Zielauswahl (überschreibt L/R-Targeting) | `aim_x`, `aim_y` |
+| **L2/LT** | Modifier: Element-Vorschau (hält Crafting-Raster offen) | `modifier_left` |
+| **R2/RT** | Modifier: Power-Attack (langsamer, mehr Schaden) | `modifier_right` |
+
+### Tastatur-Fallback (Spieler 1 + 2 lokal)
+
+| Spieler | Bewegung | B | A | Y | X | L | R | Start | Select |
+|---------|----------|---|---|---|---|---|---|-------|--------|
+| **P1** | WASD | J | K | I | U | Q | E | Esc | Tab |
+| **P2** | Pfeiltasten | Num1 | Num2 | Num4 | Num5 | Num7 | Num9 | Num0 | Num. |
+
+### Godot-Input-Mapping-Regeln
+- Alle Actions verwenden `InputMap` in `project.godot` (keine hardcodierten Keycodes)
+- `player_id` → Joypad-Index via `Input.get_connected_joypads()`
+- Tastatur-Spieler: immer `player_id = 0` (P1) und `player_id = 1` (P2)
+- Joypad-Hot-Plug: `Input.joy_connection_changed`-Signal abfangen, Spieler-Zuordnung aktualisieren
+- Button-Remapping wird in `user://controls.tres` persistiert (Accessibility)
+
+### Button-Prompts im HUD
+- Standard: SNES-Notation (A/B/X/Y/L/R)
+- Erkennung via `Input.get_joy_name()`:
+  - Xbox-Controller → „A/B/X/Y/LB/RB/LT/RT"
+  - PlayStation → „✕/○/□/△/L1/R1/L2/R2"
+  - Nintendo Switch Pro → SNES-Notation beibehalten
+  - Unbekannt / Tastatur → Tasten-Buchstaben anzeigen
 
 ---
 
@@ -534,8 +606,9 @@ Spieler lernen durch Tun, nicht durch Lesen. Jede Mechanic wird isoliert eingef�
 * Option im Einstellungsmenü unter „Barrierefreiheit"
 
 ### Controller & Input
-* Vollständiges Button-Remapping für alle Aktionen
-* Combo-Assist-Modus: Motion-Inputs vereinfacht (nur Richtung + Button, keine Geste nötig)
+* Vollständiges Button-Remapping für alle Aktionen (persistiert in `user://controls.tres`)
+* Combo-Assist-Modus: Motion-Inputs vereinfacht (nur Richtung + `B`, keine Geste nötig)
+* SNES-Layout als Referenz – alle Funktionen mit 12 Buttons bedienbar
 * Mono-Audio-Option (für einseitige Hörbeeinträchtigung)
 
 ### UI & Lesbarkeit

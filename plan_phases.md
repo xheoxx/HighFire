@@ -103,7 +103,7 @@ Alle Design-Entscheidungen getroffen und in `DESIGN.md` dokumentiert:
 - Dodge: Richtungsvektor × 600 px/s für 0.2s, dann Cooldown
 - Unverwundbarkeit während Dodge (Flag `is_dodging`)
 - Spieler-Index (0–3) bestimmt Farbe aus Konstanten-Dictionary
-- Input-Abstraktion: `get_move_vector(player_id)` gibt `Vector2` zurück – unterstützt Joypad + Keyboard
+- Input-Abstraktion: `get_move_vector(player_id)` gibt `Vector2` zurück – unterstützt D-Pad, Analogstick + Keyboard (lt. Controller-Layout in DESIGN.md)
 
 **Akzeptanzkriterien:**
 - [ ] Spieler 1 und 2 bewegen sich unabhängig mit eigenem Controller/Tastatur
@@ -196,8 +196,13 @@ DESTROYED → ColorRect unsichtbar, Loch-Effekt via #FF4400 darunter
 **Zu konfigurierende Einträge:**
 ```
 project.godot:
-  [input]         → Alle Input-Actions aus DESIGN.md (move_left, dodge, lock_target, etc.)
-  [autoload]      → ArenaStateManager, DamageSystem
+  [input]         → Actions lt. DESIGN.md Controller-Layout:
+                    move_up, move_down, move_left, move_right,
+                    action_attack, action_dodge, action_element, action_special,
+                    target_prev, target_next, menu_pause, menu_info
+                    + Analog-Erweiterungen: aim_x, aim_y, modifier_left, modifier_right
+                    + P1 Keyboard + P2 Keyboard (lt. Tastatur-Fallback-Tabelle in DESIGN.md)
+  [autoload]      → ArenaStateManager, DamageSystem, MusicManager
   [layer_names]   → Physics-Layer lt. DESIGN.md (Spieler, Terrain, Projektile, Wände, Raycast)
   [display]       → Viewport-Größe: 1920×1080, Stretch-Mode: canvas_items
 ```
@@ -235,8 +240,9 @@ project.godot:
 ```
 
 **Zu implementierende Logik:**
-- Ring-Buffer der letzten Joystick-Richtungen (max. 8 Einträge, 0.4s Zeitfenster)
-- Richtungsquantisierung: Analogwert → 8-Richtungs-Enum (`UP, DOWN, LEFT, RIGHT, UP_RIGHT, ...`)
+- Ring-Buffer der letzten D-Pad-/Stick-Richtungen (max. 8 Einträge, 0.4s Zeitfenster)
+- D-Pad: Direktes Richtungs-Enum aus `InputEvent` (digital, kein Deadzone nötig)
+- Analogstick (falls vorhanden): Richtungsquantisierung mit Deadzone 0.3 → 8-Richtungs-Enum
 - Pattern-Matching: Buffer gegen `combo_definitions`-Dictionary prüfen (längster Match gewinnt)
 - Perfect-Timing-Bonus: wenn gesamte Geste < 0.15s → Signal `perfect_input` emittieren
 - `combo_chain.gd`: `Line2D`-basierte Runen-Visualisierung, jeder Input fügt ein Element hinzu
@@ -259,6 +265,7 @@ const COMBOS = {
 - [ ] Fehlgeschlagener Input löscht den Buffer
 
 **Fallstricke:**
+- D-Pad-Eingaben sind digital – kein Deadzone-Problem, aber diagonale Inputs (↓→ gleichzeitig) müssen als Sequenz erkannt werden, nicht als einzelner Frame
 - Analogstick-Deadzone: Werte unter 0.3 ignorieren, sonst False-Positives
 - Delta-Time beachten: Zeitfenster in `_process(delta)` akkumulieren, nicht in Frames
 
@@ -406,7 +413,7 @@ const COMBOS = {
 
 **Zu implementierende Logik:**
 - `player_spawner.gd`: Spawnt 2–4 Spieler, weist `player_id` (0–3) und Spawn-Position zu
-- Input-Mapping: `player_id` → Joypad-Index, Keyboard-Fallback für Spieler 0+1
+- Input-Mapping: `player_id` → Joypad-Index (SNES/Xbox/PS automatisch), Keyboard-Fallback lt. DESIGN.md Tastatur-Tabelle
 - `camera_controller.gd`: berechnet Mittelpunkt aller aktiven Spieler, lerpt Zoom
 - Split-Screen-Trigger: Abstand > 60% Arena-Breite → `SubViewport`-Modus aktivieren
 - Zoom-Range: 0.5x – 1.5x, via `Camera2D.zoom`
