@@ -12,7 +12,7 @@
 - **Kerndokumente**:
   - `PLAN_PHASES.md` – Phasen, Streams und Abhängigkeiten
   - `DESIGN.md` – Vollständiges Design: Visuals, Combos, Crafting, Balance, Kamera, Sound, Tutorial, Accessibility
-  - `MOODBOARD.md` – Visuelle Referenz-Prompts
+  - `MOODBOARD.md` – Visuelle Referenz-Prompts *(nur bei visuellen Designfragen einlesen: Farben, Stil, HUD-Layout, Arena-Atmosphäre)*
 
 ---
 
@@ -21,7 +21,8 @@
 ### Grundregeln
 - **Kein Godot-Editor verfügbar** in der Cloud – alle Szenen (`.tscn`) und Skripte (`.gd`) werden als Textdateien erstellt und gepusht
 - Der Auftraggeber öffnet den Godot-Editor lokal, um Änderungen zu testen
-- **Beim Start einer neuen Session: sofort alle drei Kerndokumente vollständig einlesen** – `PLAN_PHASES.md`, `DESIGN.md` und `MOODBOARD.md` – bevor irgendeine Aufgabe begonnen wird
+- **Beim Start einer neuen Session: sofort `PLAN_PHASES.md` und `DESIGN.md` vollständig einlesen** – bevor irgendeine Aufgabe begonnen wird
+- `MOODBOARD.md` nur bei visuellen Designfragen einlesen (Farben, Stil, HUD-Layout, Arena-Atmosphäre)
 - Vor jedem größeren Schritt `PLAN_PHASES.md` lesen, um den aktuellen Stand zu kennen
 
 ### Ordnerstruktur (einhalten!)
