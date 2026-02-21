@@ -740,6 +740,105 @@ Spieler lernen durch Tun, nicht durch Lesen. Jede Mechanic wird isoliert eingef�
 
 ---
 
+## Mod-System
+
+### Design-Absicht
+Alle Spiel-relevanten Werte und Definitionen sind in externen Ressourcen-Dateien gespeichert – nie hardcodiert. Das ermöglicht zwei Ebenen der Modbarkeit: einfache Daten-Mods (Werte ändern) und fortgeschrittene Skript-Mods (neue Logik). Die Core-Engine-Systeme (Physik, State Machine, Input-Parsing, Netzwerk) sind bewusst nicht modbar – sie müssen intern konsistent bleiben.
+
+---
+
+### Ebene 1 – Data Mods (einfach, sicher)
+
+Nur `.tres`-Ressourcen-Dateien im `user://mods/`-Ordner. Kein Quellcode-Zugriff nötig. Sicher für lokalen Multiplayer (beide Clients müssen identische Mod-Daten laden – prüfbar via Hash).
+
+| Resource-Datei | Inhalt | Modbar |
+|----------------|--------|--------|
+| `res://resources/spell_definitions.tres` | Element-Kodierung, Kombinationen, Effekt-Typen | ✅ |
+| `res://resources/spell_values.tres` | Schaden, Reichweite, Cooldown pro Spell | ✅ |
+| `res://resources/combo_definitions.tres` | D-Pad-Sequenzen → Spell-Mapping (Modus R) | ✅ |
+| `res://resources/weapon_definitions.tres` | Archetypen, Stats, Upgrade-Nodes | ✅ |
+| `res://resources/balance_config.tres` | HP, Speed, Dodge, Magie-Timeout, Schadensklassen | ✅ |
+| `res://resources/bot_config.tres` | KI-Schwierigkeitsstufen, Reaktionszeiten | ✅ |
+| `res://resources/arena_config.tres` | Spawn-Positionen, Tile-Konfiguration pro Arena | ✅ |
+
+**Mod-Ordner-Konvention:**
+```
+user://mods/
+    mein_mod/
+        spell_values.tres       ← überschreibt res://resources/spell_values.tres
+        combo_definitions.tres  ← überschreibt res://resources/combo_definitions.tres
+        mod.cfg                 ← Name, Version, Autor, Kompatibilitäts-Version
+```
+
+Der `ModLoader` lädt alle `.tres`-Dateien aus `user://mods/` und merged sie mit den Basis-Ressourcen. Fehlende Felder fallen auf den Basiswert zurück – Mods müssen nicht vollständig sein.
+
+---
+
+### Ebene 2 – Script Mods (fortgeschritten)
+
+Externe `.gd`-Dateien werden zur Laufzeit via `load()` geladen und in definierte Hook-Punkte eingehängt. Neue Spell-Effekte, neue KI-Verhalten, neue Mechaniken – ohne das Spiel neu zu kompilieren.
+
+> ⚠ Script-Mods sind **nur für Singleplayer und lokalen Multiplayer** vorgesehen. Im Online-Multiplayer werden Script-Mods deaktiviert (Cheating-Risiko).
+
+**Verfügbare Hook-Punkte:**
+
+| Hook | Datei | Wann aufgerufen |
+|------|-------|----------------|
+| `spell_effect_hook` | `spell_system.gd` | Nach Spell-Einschlag, vor Schadensanwendung |
+| `on_tile_destroyed` | `arena_grid.gd` | Nach Tile-Zerstörung |
+| `on_player_hit` | `damage_system.gd` | Nach Treffer, vor HP-Abzug |
+| `bot_decision_hook` | `bot_controller.gd` | Pro Bot-Entscheidungs-Tick |
+| `on_round_end` | `arena_state_manager.gd` | Bei Rundenende |
+
+**Beispiel-Skript-Mod** (`user://mods/mein_mod/spell_effect.gd`):
+```gdscript
+# Überschreibt den Feuer+Blitz-Spell-Effekt
+func on_spell_hit(spell_type: String, target: Node, damage: int) -> void:
+    if spell_type == "plasma_bolt":
+        target.apply_status("burning", 3.0)   # 3s Brennen
+        target.apply_status("shocked", 0.5)   # 0.5s Betäubung
+```
+
+**Hook-Registrierung** erfolgt über `mod.cfg`:
+```ini
+[hooks]
+spell_effect_hook = "spell_effect.gd"
+bot_decision_hook = "my_bot.gd"
+```
+
+---
+
+### ModLoader – Architektur
+
+`ModLoader` ist ein AutoLoad das beim Spielstart läuft – vor allen anderen Systemen.
+
+```
+Spielstart
+    │
+    ▼
+ModLoader._ready()
+    ├── user://mods/ scannen
+    ├── mod.cfg lesen + Kompatibilität prüfen
+    ├── Ebene 1: .tres-Dateien laden + in Basis-Resources mergen
+    ├── Ebene 2: .gd-Dateien laden + in Hook-Registry eintragen
+    └── Signal mod_loading_complete → restliche AutoLoads starten
+```
+
+**Technische Umsetzung:**
+```
+/scripts/mod_loader.gd          ← AutoLoad (lädt vor allen anderen)
+/resources/mod_registry.tres    ← Liste aller geladenen Mods (Name, Version, Hash)
+/scripts/hook_registry.gd       ← Verwaltet Script-Mod-Hooks zur Laufzeit
+```
+
+### Regeln für Implementierer
+- Alle Konstanten und Balancing-Werte **immer** aus der zugehörigen `.tres`-Resource lesen – nie als `const` im Skript hardcoden
+- Neue Systeme müssen beim Entwurf sofort ihre Resource-Datei definieren
+- Hook-Punkte werden in den jeweiligen Kern-Skripten als leere `_run_hooks(hook_name, args)`-Aufrufe vorbereitet
+- `ModLoader` muss als erster AutoLoad in `project.godot` registriert sein
+
+---
+
 ## Übergreifende Design-Regeln
 
 * Lesbarkeit über Realismus
