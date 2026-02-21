@@ -25,21 +25,29 @@
 
 ### Ordnerstruktur (einhalten!)
 ```
-/scenes/          → .tscn Szenen-Dateien
+/scenes/          → .tscn Szenen-Dateien (inkl. /scenes/ui/ für HUD, Menüs, Panels)
 /scripts/         → .gd GDScript-Dateien
-/ui/              → HUD, Menus, Crafting-Panels
 /audio/           → AudioStream-Ressourcen
 /resources/       → Shared Resources (.tres, .res)
 /addons/          → Godot-Plugins (falls nötig)
 ```
 
 ### Commit-Konventionen
-Commits immer mit Stream-Präfix aus `plan_phases.md`:
+Commits immer mit **Phase + Stream-Buchstabe** als Präfix aus `plan_phases.md`:
 ```
-[A] feat: MainArena-Szene angelegt
-[B] fix: Dodge-Cooldown korrigiert
-[C] feat: Target-Lock HUD-Ring hinzugefügt
+[1A] feat: MainArena-Szene angelegt
+[2B] fix: Dodge-Cooldown korrigiert
+[3C] feat: Target-Lock HUD-Ring hinzugefügt
 ```
+
+### Branch-Naming-Konvention
+Ein Branch pro Phase-Stream-Kombination:
+```
+phase1/stream-a-scene-setup
+phase2/stream-b-movement
+phase3/stream-c-combat
+```
+PRs gehen immer von Feature-Branch → `main`. Niemals direkt auf `main` pushen.
 
 ### Szenen erstellen (ohne Editor)
 Godot `.tscn`-Dateien sind plain text im eigenen Format. Beispiel-Struktur:

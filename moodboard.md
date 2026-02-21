@@ -29,14 +29,6 @@ Die Prompts sind bewusst auf Englisch gehalten, da Bildgeneratoren (Midjourney, 
 
 ---
 
-## Nächste Schritte
-
-- Prompts in einem Bildgenerator (z. B. Midjourney, DALL-E, Stable Diffusion) generieren.
-- Ergebnisse als Referenz für Farbpalette, Stil und UI-Design ablegen.
-- Auf Basis der Bilder Entscheidungen für Arena-Layout, Spieler-Design und HUD treffen.
-
----
-
 ## 4. „Warrior Silhouette" – Charakter-Design
 
 **Stimmung**: Kraftvolle, klar lesbare Spieler-Silhouetten. Hybrid aus Krieger und Magier. Kein übertriebenes Detail – Farbe und Glühen definieren Identität.
@@ -58,3 +50,11 @@ Die Prompts sind bewusst auf Englisch gehalten, da Bildgeneratoren (Midjourney, 
 **Stimmung**: Dramatisch, einladend, aber dunkel und geheimnisvoll. Das Menü soll bereits Lust auf die Arena machen.
 
 > Dark fantasy game main menu screen design, center logo glowing in electric blue and violet reading "HighFire" in angular futuristic typography with arcane rune accents, background showing a wide aerial view of a dark obsidian arena with glowing rune cracks and faint silhouettes of fighters, atmospheric purple volumetric fog at the edges, simple vertical menu buttons on the left side with clean white monospaced text (Play, Tutorial, Settings, Quit), subtle particle animation floating upward like embers, overall mood dark and powerful with neon accent lighting, game UI concept art, cinematic composition, 4K
+
+---
+
+## Nächste Schritte
+
+- Prompts in einem Bildgenerator (z. B. Midjourney, DALL-E, Stable Diffusion) generieren.
+- Ergebnisse als Referenz für Farbpalette, Stil und UI-Design ablegen.
+- Auf Basis der Bilder Entscheidungen für Arena-Layout, Spieler-Design und HUD treffen.

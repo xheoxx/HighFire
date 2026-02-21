@@ -3,9 +3,9 @@
 ## Referenz-Dokumente
 | Dokument | Inhalt |
 |----------|--------|
-| `DESIGN.md` | Vollständiges Design: Visuals, Combos, Crafting, Balance, Kamera, Tutorial, Accessibility |
-| `moodboard.md` | Bildgenerator-Prompts für 3 Stimmungswelten |
-| `AGENTS.md` | Persona, Sprache, Koordinationsregeln für Agenten |
+| `DESIGN.md` | Vollständiges Design: Visuals, Combos, Crafting, Balance, Kamera, Tutorial, Accessibility, Menüs, Bot-KI, Progression |
+| `moodboard.md` | Bildgenerator-Prompts für 6 Stimmungswelten (Arena, Gameplay, Crafting, Charakter, HUD, Menü) |
+| `AGENTS.md` | Persona, Sprache, Koordinationsregeln, Branch-Konventionen, Teststrategie |
 
 ---
 
@@ -30,6 +30,15 @@ Alle Design-Entscheidungen getroffen und in `DESIGN.md` dokumentiert:
 - Arena State Machine
 - Tutorial-Flow
 - Accessibility
+- Hauptmenü & Einstellungsmenü
+- KI/Bot-Gegner (4 Schwierigkeitsstufen)
+- Vollständige Farbpalette (Hex-Codes)
+- Progressions- & Unlock-System
+- Pause-Menü
+- Out-of-Bounds-Verhalten
+- Spawn-Positionen pro Arena
+- Musik-Konzept (Layer-System)
+- Physics-Layer-Definition
 
 ---
 
@@ -178,6 +187,34 @@ DESTROYED → ColorRect unsichtbar, Loch-Effekt via #FF4400 darunter
 **Fallstricke:**
 - Zu viele Nodes: 1024 Tile-Nodes können Performance kosten – `_ready()` vereinfachen, keine unnötigen Children
 - Tile-Kollision deaktivieren: `call_deferred("set_disabled", true)` statt direktem Aufruf in `_physics_process`
+
+---
+
+#### Stream E – project.godot-Konfiguration
+**Verantwortlich für**: Einmalige Engine-Konfiguration, die alle Streams benötigen. **Nur dieser Stream darf `project.godot` ändern.**
+
+**Zu konfigurierende Einträge:**
+```
+project.godot:
+  [input]         → Alle Input-Actions aus DESIGN.md (move_left, dodge, lock_target, etc.)
+  [autoload]      → ArenaStateManager, DamageSystem
+  [layer_names]   → Physics-Layer lt. DESIGN.md (Spieler, Terrain, Projektile, Wände, Raycast)
+  [display]       → Viewport-Größe: 1920×1080, Stretch-Mode: canvas_items
+```
+
+**Godot-Konfig-Typ:**
+- `project.godot` (TOML-ähnliches Godot-Format), manuell bearbeiten
+
+**Akzeptanzkriterien:**
+- [ ] Alle Input-Actions in `project.godot` definiert (mind. 12 Actions)
+- [ ] AutoLoad-Pfade korrekt und Dateien existieren
+- [ ] Physics-Layer 1–5 benannt lt. DESIGN.md
+- [ ] Viewport-Größe auf 1920×1080 gesetzt
+
+**Fallstricke:**
+- **Kein anderer Stream** darf `project.godot` anfassen – bei Bedarf Issue an Stream E
+- Input-Action-Namen müssen exakt mit `InputEvent`-Abfragen in anderen Streams übereinstimmen
+- AutoLoad-Pfade relativ zum Projekt-Root angeben (`res://scripts/...`)
 
 ---
 
@@ -445,6 +482,47 @@ const COMBOS = {
 
 ---
 
+#### Stream E – Hauptmenü & Lobby
+**Abhängigkeit**: Stream A (ArenaStateManager) und Stream C (HUD).
+
+**Zu erstellende Dateien:**
+```
+/scenes/ui/main_menu.tscn          ← Hauptmenü-Szene
+/scenes/ui/settings_menu.tscn     ← Einstellungen (Audio, Video, Controls)
+/scenes/ui/lobby.tscn             ← Lobby für Arena-/Spielerauswahl
+/scenes/ui/pause_menu.tscn        ← In-Game-Pause-Overlay
+/scripts/main_menu.gd             ← Menü-Navigation
+/scripts/settings_manager.gd      ← Persistente Einstellungen (user://settings.tres)
+/scripts/lobby.gd                 ← Lobby-Logik (Spieler hinzufügen, Arena wählen)
+/scripts/pause_menu.gd            ← Pause-Verhalten lt. DESIGN.md
+```
+
+**Zu implementierende Logik:**
+- Hauptmenü-Buttons: Spielen, Tutorial, Einstellungen, Beenden (lt. `DESIGN.md`)
+- Lobby: Spieleranzahl wählen (2–4), Farbe zuweisen, Arena auswählen
+- Einstellungen: Lautstärke-Regler, Auflösung, Fullscreen-Toggle, Tastenbelegung anzeigen
+- Pause-Menü: `get_tree().paused = true`, nur Fortsetzen/Einstellungen/Aufgeben/Beenden
+
+**Godot-Node-Typen:**
+- `Control` → Root aller Menü-Szenen
+- `VBoxContainer` → Button-Layout
+- `HSlider` → Lautstärke
+- `OptionButton` → Auflösung, Arena-Auswahl
+- `ColorRect` → Hintergrund mit `moodboard.md`-Farbpalette
+
+**Akzeptanzkriterien:**
+- [ ] Hauptmenü startet bei Spielstart (Autoload oder default scene)
+- [ ] Aus Lobby heraus wird korrekte Arena mit korrekter Spieleranzahl geladen
+- [ ] Einstellungen persistieren in `user://settings.tres`
+- [ ] Pause-Menü funktioniert im `COMBAT`-State
+- [ ] Kein UI-Element blockiert Gameplay-Input im COMBAT-State
+
+**Fallstricke:**
+- `get_tree().paused = true` pausiert **alle** Nodes – Pause-Menü muss `process_mode = PROCESS_MODE_WHEN_PAUSED` haben
+- Scene-Transition sauber machen: `get_tree().change_scene_to_packed()`, nicht `queue_free()` der aktuellen Szene
+
+---
+
 ### Phase 4 – Polish & Feedback
 **Ziel**: Das Spiel muss sich gut anfühlen. Alle Feedback-Systeme werden implementiert, Tutorial und Accessibility kommen hinzu.
 
@@ -604,6 +682,92 @@ const COMBOS = {
 
 ---
 
+#### Stream F – Musik-System
+**Abhängigkeit**: Stream A (Game Feel) für Timing-Integration.
+
+**Zu erstellende Dateien:**
+```
+/scripts/music_manager.gd          ← AutoLoad: Layer-basiertes Musik-System
+/audio/music/basis_loop.ogg        ← Platzhalter oder prozedurale Generierung
+/audio/music/combat_layer.ogg
+/audio/music/intensity_layer.ogg
+/audio/music/finale_layer.ogg
+/audio/music/round_end_stinger.ogg
+/audio/music/menu_theme.ogg
+```
+
+**Zu implementierende Logik:**
+- `MusicManager` als AutoLoad mit `AudioStreamPlayer`-Nodes pro Layer
+- Layer-Aktivierung via `volume_db`-Tween (lt. `DESIGN.md` Musik-Konzept)
+- Alle Layer rhythmisch synchron (140 BPM), starten gleichzeitig
+- State-Listening: `ArenaStateManager`-Signale triggern Layer-Wechsel
+  - `LOBBY` → menu_theme aktiv, alle anderen aus
+  - `COMBAT` → basis_loop + combat_layer
+  - HP < 30% → intensity_layer einblenden
+  - 2 Spieler übrig → finale_layer einblenden
+  - `ROUND_END` → Stinger abspielen, dann zurück zu basis_loop
+
+**Godot-Node-Typen:**
+- `AudioStreamPlayer` → je ein Node pro Layer (kein 2D/3D nötig für Musik)
+- `Tween` → Lautstärke-Fades (0.5s Crossfade)
+
+**Akzeptanzkriterien:**
+- [ ] Musik spielt ab Hauptmenü-Start
+- [ ] Layer-Wechsel reagiert korrekt auf State-Änderungen
+- [ ] Kein Knacksen oder Sprung bei Layer-Fades
+- [ ] Lautstärke-Regler aus Einstellungen wirkt auf Musik-Bus
+- [ ] Mute/Unmute funktioniert
+
+**Fallstricke:**
+- `AudioStreamPlayer.play()` startet von 0 – Layers müssen alle bei Spielstart `play()` aufrufen und dann via `volume_db` steuern
+- Godot Audio-Bus „Music" muss in `project.godot` oder als `.tres` angelegt werden
+- OGG-Dateien müssen Loop-Punkte korrekt gesetzt haben (`.import`-Einstellungen)
+
+---
+
+#### Stream G – Bot-KI
+**Abhängigkeit**: Phase 3 vollständig (Damage-System, ArenaStateManager), Stream D (Tutorial) für Trainings-Bot-Nutzung.
+
+**Zu erstellende Dateien:**
+```
+/scripts/bot_controller.gd         ← Haupt-Bot-Logik (ersetzt Input für Bot-Spieler)
+/scripts/bot_difficulty.gd         ← Schwierigkeitsstufen-Konfiguration
+/resources/bot_easy.tres           ← Schwierigkeits-Resource (Reaktionszeit, Fehlerrate)
+/resources/bot_medium.tres
+/resources/bot_hard.tres
+/resources/bot_brutal.tres
+```
+
+**Zu implementierende Logik (lt. DESIGN.md Bot-KI):**
+- Bot ersetzt `_input()` mit eigenem Entscheidungssystem
+- State-Machine für Bot: `IDLE → APPROACH → ATTACK → DODGE → RETREAT`
+- Pro Schwierigkeitsstufe (lt. DESIGN.md):
+  - **Anfänger**: Reaktionszeit 0.8s, keine Combos, zufällige Bewegung
+  - **Mittel**: Reaktionszeit 0.4s, 2-Schritt-Combos, Dodge bei erkanntem Projektil
+  - **Schwer**: Reaktionszeit 0.15s, volle Combos, prädiktives Dodging
+  - **Brutal**: Reaktionszeit 0.05s, perfekte Combos, Frame-genaues Dodging, Terrain-Awareness
+- Target-Auswahl: Nächster Spieler mit niedrigstem HP
+- LOS-Prüfung vor Angriff
+- Bot-Nodes verwenden gleiche `player.tscn`-Szene, nur mit `bot_controller.gd` als Script-Override
+
+**Godot-Node-Typen:**
+- `Resource` → `bot_difficulty.gd` extends Resource (Reaktionszeit, Fehlerrate, Combo-Tiefe)
+- `Timer` → Entscheidungs-Cooldown pro Schwierigkeitsstufe
+
+**Akzeptanzkriterien:**
+- [ ] Bot spielt autonom eine Runde gegen menschlichen Spieler
+- [ ] Schwierigkeitsstufe wählbar in Lobby
+- [ ] Bot weicht Projektilen aus (ab Schwierigkeit Mittel)
+- [ ] Bot nutzt Spells und Combos (ab Schwierigkeit Schwer)
+- [ ] Bot blockiert das Spiel nie (kein Freeze, kein ewiges IDLE)
+
+**Fallstricke:**
+- Bot darf **nicht** direkt State im ArenaStateManager ändern – nur über reguläre Spieler-Actions
+- Brutale KI muss trotzdem Timing-Varianz haben (sonst unmenschlich und frustrierend)
+- Bot-Input muss `InputEvent`-kompatibel sein, damit Replay-System (falls geplant) funktioniert
+
+---
+
 ### Phase 5 – Steam-Vorbereitung
 **Ziel**: Release-fähige Version auf Steam veröffentlichen.
 
@@ -698,8 +862,47 @@ const COMBOS = {
 
 ---
 
+#### Stream E – Progressions- & Unlock-System
+**Abhängigkeit**: Stream C (Steam-Integration für Achievement-Sync) und Phase 4 vollständig.
+
+**Zu erstellende Dateien:**
+```
+/scripts/progression_manager.gd    ← AutoLoad: Trackt Statistiken & Unlocks
+/resources/unlock_definitions.tres ← Alle Unlock-Kategorien und Bedingungen
+/scenes/ui/unlock_popup.tscn      ← In-Game-Popup bei neuem Unlock
+/scenes/ui/collection_screen.tscn ← Übersicht aller Unlocks
+```
+
+**Zu implementierende Logik (lt. DESIGN.md Progressions-System):**
+- Persistenz in `user://progress.tres` (lokaler Speicher)
+- Statistiken tracken: Matches gespielt/gewonnen, Kills, Tiles zerstört, Stunden gespielt
+- Unlock-Kategorien (lt. DESIGN.md):
+  - Spieler-Farb-Skins (10/25/50/100 Siege)
+  - Rim-Glow-Muster (Achievements)
+  - Arena-Farbthemen (Spielzeit)
+  - Waffen-Glüh-Farben (Element-Rezepte verwendet)
+  - Lobby-Titel (besondere Leistungen)
+- Collection-Screen: Grid-Ansicht aller Unlocks, Locked-Items ausgegraut
+- Unlock-Popup: kurze Animation (Tween) + Sound-Effekt bei Freischaltung
+- Steam-Achievements parallel triggern (`SteamManager.unlock_achievement()`)
+
+**Akzeptanzkriterien:**
+- [ ] Fortschritt wird bei Spielende gespeichert
+- [ ] Fortschritt bleibt nach Neustart erhalten
+- [ ] Unlock-Popup erscheint genau einmal pro neuem Unlock
+- [ ] Collection-Screen zeigt korrekte Unlock-Zählung
+- [ ] Kein spielerischer Vorteil durch Unlocks (rein kosmetisch)
+
+**Fallstricke:**
+- `user://` ist plattformabhängig – auf Steam mit `OS.get_user_data_dir()` prüfen
+- Save-Corruption vermeiden: Atomares Schreiben (temp-Datei → rename)
+- Unlock-Definitionen als Resource, nicht hardcoded – erleichtert Balancing
+
+---
+
 ## Koordinationsregeln für Agenten
-- Jeder Agent arbeitet an einem Stream und hält seinen Output in einem dedizierten Unterordner (`/scenes/`, `/scripts/`, `/ui/`, `/audio/`)
+- Jeder Agent arbeitet an einem Stream und hält seinen Output in seinem dedizierten Unterordner (`/scenes/`, `/scripts/`, `/audio/`, `/resources/`)
+- UI-Szenen kommen unter `/scenes/ui/` (nicht in einen separaten `/ui/`-Ordner)
 - Änderungen an shared Interfaces (z. B. `ArenaStateManager`-Signals) werden zuerst in `DESIGN.md` dokumentiert, bevor implementiert wird
 - Commits immer mit Stream-Präfix: `[1A] feat: ...`, `[2B] fix: ...` (Phasennummer + Stream-Buchstabe)
 - Bei Abhängigkeitskonflikten: Stream blockiert sich selbst (`⚠ BLOCKIERT` in dieser Datei) und erstellt GitHub Issue mit Label `blocked`

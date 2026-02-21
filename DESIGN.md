@@ -195,7 +195,7 @@ Spieler-Inputs sichtbar, ausdrucksstark und befriedigend machen. Crafting und Co
 
 ## Sound Design
 
-### Design Intent
+### Design-Absicht
 Sound ist das unsichtbare Feedback-System. Jeder Motion-Input, jede Destruction und jeder State-Wechsel braucht eine akustische Antwort – kurz, präzise, unverwechselbar.
 
 ### Klang-Kategorien
@@ -281,7 +281,7 @@ Jeder Spieler hat eine eindeutige Primärfarbe, die konsequent auf alle visuelle
 
 ## Combo-Grammatik & Motion-Input-Lexikon
 
-### Design Intent
+### Design-Absicht
 Motion-Combos sind die Sprache des Spiels. Jede Bewegung hat eine Bedeutung – der Spieler lernt eine Grammatik, keine Menüs. Inputs fühlen sich physisch an.
 
 ### Grundbewegungen (Basis-Lexikon)
@@ -315,7 +315,7 @@ Beispiel: `↓→` + `[Fire-Element aktiv]` + `R2` = Feuerball geradeaus
 
 ## Spellcrafting-System
 
-### Design Intent
+### Design-Absicht
 Spells werden aus Elementen zusammengebaut wie Rezepte. Das Crafting fühlt sich wie ein Ritual an – nicht wie ein Shop.
 
 ### Elemente
@@ -350,7 +350,7 @@ Spells werden aus Elementen zusammengebaut wie Rezepte. Das Crafting fühlt sich
 
 ## Weaponcrafting-System
 
-### Design Intent
+### Design-Absicht
 Waffen sind die physische Erweiterung der Spells. Eine Waffe ohne passenden Spell ist schwächer; zusammen entstehen Synergien.
 
 ### Waffen-Archetypen
@@ -500,7 +500,7 @@ Jede Aktion braucht eine sofortige, spürbare Rückmeldung. Juice macht den Unte
 
 ## Onboarding / Tutorial-Flow
 
-### Design Intent
+### Design-Absicht
 Spieler lernen durch Tun, nicht durch Lesen. Jede Mechanic wird isoliert eingeführt, dann kombiniert.
 
 ### Tutorial-Sequenz
@@ -543,7 +543,7 @@ Spieler lernen durch Tun, nicht durch Lesen. Jede Mechanic wird isoliert eingef�
 * HUD-Elemente können auf eine Seite des Bildschirms verschoben werden
 * Option: Immer Spielernamen über Charakteren anzeigen (nicht nur bei Hover)
 
-### Subtitles / Untertitel
+### Untertitel
 * Alle Tutorial-Texte als geschlossene Untertitel verfügbar
 * Wichtige Spielereignisse als Text-Ankündigung (z. B. „PLAYER 2 ELIMINATED")
 
@@ -564,6 +564,99 @@ Dieses Dokument dient als:
 * Übergeordneter Kontext für Copilot beim Generieren von Godot-Skripten
 * Referenz für Namenskonventionen (ArenaCenter, DestructibleTile, ComboChain)
 * Einschränkungs-Leitfaden zur Vermeidung von Überentwicklung oder visuellem Rauschen
+
+---
+
+## Pause-Menü
+
+### Verhalten
+- `Start`-Button während `COMBAT`-State → Spiel wird lokal pausiert (`get_tree().paused = true`)
+- Nur der Spieler der pausiert hat sieht das Menü – andere sehen „PAUSE" als Label
+- Online-Multiplayer: Pause **deaktiviert** (Echtzeit-Zwang), stattdessen Disconnect-Option
+
+### Optionen im Pause-Menü
+- Fortsetzen
+- Einstellungen (gleiche Tabs wie Hauptmenü)
+- Runde aufgeben (zurück zur Lobby)
+- Spiel beenden (zurück zum Hauptmenü)
+
+---
+
+## Out-of-Bounds-Verhalten
+
+### Was passiert bei zerstörtem Tile?
+- Spieler der auf einem `DESTROYED`-Tile steht fällt nicht sofort – erst wenn er sich bewegt und kein intaktes Tile mehr erreichbar ist
+- Fallen = kurze Sink-Animation (0.3s), dann **sofortiger Tod**
+- Kein Respawn auf zerstörtem Tile – Spawn immer auf `INTACT`-Tile
+
+### Arena-Rand
+- Unsichtbare `StaticBody2D`-Wand am Rand → Spieler können nicht herauslaufen
+- Wand-Kollision hat keinen Schadens-Effekt
+
+---
+
+## Spawn-Positionen
+
+### Pro Arena-Variante
+
+| Arena | Spawns (relativ zum Zentrum) |
+|-------|------------------------------|
+| **The Crucible** (32×32) | (–10, –10), (+10, +10), (–10, +10), (+10, –10) |
+| **Rift Canyon** (40×20) | (–16, 0), (+16, 0), (–16, –8), (+16, +8) |
+| **Collapsed Foundry** (36×28) | (–12, –10), (+12, +10), (+12, –10), (–12, +10) |
+| **Void Ring** | (0, –12), (0, +12), (–12, 0), (+12, 0) |
+
+### Spawn-Regeln
+- Minimaler Abstand zwischen Spawns: 8 Tiles
+- Alle Spawns auf garantiert `INTACT`-Tiles
+- Bei 2 Spielern: nur Spawns 1 + 2 verwenden (maximaler Abstand)
+
+---
+
+## Musik-Konzept
+
+### Design-Absicht
+Die Musik unterstreicht die Phasen der Arena, ohne die Gameplay-Sounds zu übertönen. Sie ist dynamisch – sie reagiert auf den Spielzustand.
+
+### Musik-Layer
+
+| Layer | Wann aktiv | Charakter |
+|-------|-----------|-----------|
+| **Basis-Loop** | Immer | Dunkler, atmosphärischer Ambient (Synth-Pads, tiefe Drone) |
+| **Combat-Layer** | `COMBAT`-State | Schnelles Percussion-Pattern, treibende Synth-Bassline |
+| **Intensity-Layer** | HP < 30% bei irgendeinem Spieler | Zusätzliche hohe Synth-Stabs, mehr Dringlichkeit |
+| **Finale-Layer** | Nur 2 Spieler übrig | Volle Orchestrierung, alle Layer auf Maximum |
+| **Round-End-Stinger** | `ROUND_END`-State | Kurzer, dramatischer Abschlussakord (1–2 Sekunden) |
+| **Menü-Theme** | Hauptmenü | Reduzierte Version des Basis-Loops, ruhig und einladend |
+
+### Technische Umsetzung
+- Musik als mehrere `AudioStreamPlayer`-Nodes mit synchronem Start
+- Layer-Aktivierung via `volume_db`-Fade (Tween), nicht via Play/Stop
+- Alle Layer sind rhythmisch synchron (gleiche BPM, gleicher Startpunkt)
+- BPM: 140 (passend zum Gameplay-Tempo)
+- Initiale Musik via Godot `AudioStreamOggVorbis` oder prozedurale Generierung
+
+---
+
+## Physics-Layer-Definition
+
+| Layer | Bit | Verwendung |
+|-------|-----|-----------|
+| 1 | Spieler | `CharacterBody2D` der Spieler-Nodes |
+| 2 | Terrain | Tile-`CollisionShape2D` (INTACT + CRACKED) |
+| 3 | Projektile | Spell-Projektile, Waffen-Hitboxen |
+| 4 | Arena-Wände | Äußere Begrenzung |
+| 5 | Raycast-only | LOS-Checks, Target-Lock-Raycasts |
+
+### Kollisions-Matrix
+
+| | Spieler | Terrain | Projektile | Wände | Raycast |
+|---|---------|---------|-----------|-------|---------|
+| **Spieler** | ✅ | ✅ | ✅ | ✅ | – |
+| **Terrain** | ✅ | – | ✅ | – | ✅ |
+| **Projektile** | ✅ | ✅ | – | ✅ | – |
+| **Wände** | ✅ | – | ✅ | – | – |
+| **Raycast** | – | ✅ | – | – | – |
 
 ---
 
