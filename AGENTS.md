@@ -64,6 +64,33 @@ Streams innerhalb einer Phase können parallel laufen, aber **Phase N darf nicht
 - Zuerst `DESIGN.md` konsultieren
 - Wenn die Antwort dort nicht steht: GitHub Issue mit Label `question` erstellen und blockierten Stream in `plan_phases.md` als `⚠ BLOCKIERT` markieren
 
+## Teststrategie pro Stream
+
+Da kein Godot-Editor in der Cloud läuft, gilt folgende Teststrategie:
+
+| Testmethode | Wann | Wie |
+|-------------|------|-----|
+| **GDScript-Syntax** | Nach jedem Commit | `godot --headless --check-only -s scripts/datei.gd` |
+| **Szenen-Validierung** | Nach .tscn-Erstellung | `godot --headless --import` prüft ob Szene ladbar |
+| **Logik-Unit-Test** | Bei kritischen Scripts | Godot GUT-Framework oder einfache `assert()`-Blöcke in `_ready()` |
+| **Akzeptanzkriterien** | Stream-Abschluss | Alle Checkboxen in `plan_phases.md` manuell durchgehen und bestätigen |
+
+Für Scripts die State-Logik enthalten (z. B. `arena_state_manager.gd`, `tile.gd`): Testfälle als Kommentar am Ende der Datei dokumentieren, damit der Auftraggeber sie lokal schnell ausführen kann.
+
+## Umgang mit Merge-Konflikten
+
+**Vorbeugen:**
+- Jeder Stream arbeitet ausschließlich in seinem Ordner und seinen Dateien (lt. Dateiliste in `plan_phases.md`)
+- Shared-Interface-Dateien (`arena_state_manager.gd`, `damage_system.gd`) werden **nur von Stream A** der jeweiligen Phase angelegt – andere Streams lesen sie nur
+- Keine zwei Streams ändern gleichzeitig `project.godot` (Input-Maps, AutoLoads) – in `plan_phases.md` koordinieren wer das wann macht
+
+**Im Konfliktfall:**
+1. `git fetch origin` + `git rebase origin/main` (nicht merge)
+2. Konflikte in `.gd`-Dateien: Logik zusammenführen, Signal-Interfaces nie umbenennen
+3. Konflikte in `.tscn`-Dateien: Szene komplett aus dem anderen Branch übernehmen (`git checkout --theirs`), eigene Änderungen manuell re-applizieren
+4. Konflikt in `plan_phases.md`: immer die aktuellere Version behalten, Status-Flags zusammenführen
+5. Nach Auflösung: GitHub Issue kommentieren + PR reviewen lassen
+
 ---
 
 ## Kommunikation & Synchronisation

@@ -565,4 +565,153 @@ Dieses Dokument dient als:
 * Referenz für Namenskonventionen (ArenaCenter, DestructibleTile, ComboChain)
 * Einschränkungs-Leitfaden zur Vermeidung von Überentwicklung oder visuellem Rauschen
 
+---
+
+## Hauptmenü & Einstellungsmenü
+
+### Hauptmenü-Flow
+```
+[Hauptmenü]
+    ├── Spielen
+    │     ├── Lokal (1–4 Spieler)
+    │     │     ├── Spieleranzahl wählen
+    │     │     ├── Arena wählen
+    │     │     └── Start
+    │     └── Online
+    │           ├── Spiel hosten
+    │           └── Spiel beitreten (IP-Eingabe / Steam-Lobby)
+    ├── Tutorial
+    ├── Einstellungen
+    └── Beenden
+```
+
+### Design-Regeln Hauptmenü
+- Hintergrund: animierte Arena-Silhouette (Loop, sehr dunkel, wenig Bewegung)
+- Schriftart: monospaced, emissiv wirkend (weiß auf schwarz mit leichtem Glow)
+- Keine 3D-Menüs – flache `VBoxContainer`-Struktur mit `ColorRect`-Buttons
+- Musik: ruhige, atmosphärische Loop-Version des Arena-Soundtracks
+
+### Einstellungsmenü-Kategorien
+
+| Kategorie | Einstellungen |
+|-----------|--------------|
+| **Video** | Vollbild / Fenster, Auflösung, VSync, FPS-Limit |
+| **Audio** | Master-Lautstärke, SFX-Lautstärke, Musik-Lautstärke, Mono-Audio |
+| **Steuerung** | Button-Remapping pro Spieler, Deadzone-Schwellwert |
+| **Barrierefreiheit** | Farbenblindmodus, Combo-Assist, Textgröße (80–150%), Spielernamen immer anzeigen |
+| **Spiel** | Best-of (3/5/7), Respawn-Modus, Timer (aus/2min/5min) |
+
+### Technische Umsetzung
+```
+/scenes/ui/main_menu.tscn         → Hauptmenü
+/scenes/ui/settings_menu.tscn     → Einstellungen (Tab-basiert)
+/scenes/ui/lobby_screen.tscn      → Spieler-Auswahl vor Match
+/scripts/ui/main_menu.gd
+/scripts/ui/settings_menu.gd
+```
+
+---
+
+## KI / Bot-Gegner
+
+### Design-Absicht
+Bots ermöglichen Solo-Spiel, dienen als Trainingspartner im Tutorial und füllen offene Slots im lokalen Multiplayer auf. Sie sollen fordernd aber fair sein.
+
+### Schwierigkeitsstufen
+
+| Stufe | Reaktionszeit | Zielgenauigkeit | Combo-Nutzung | Crafting |
+|-------|--------------|-----------------|---------------|---------|
+| **Einsteiger** | 600ms | 40% | Nur Basis-Angriff | Nein |
+| **Normal** | 350ms | 65% | Einfache Combos (↓→) | Gelegentlich |
+| **Experte** | 150ms | 85% | Alle Combos | Ja, aktiv |
+| **Meister** | 80ms | 95% | Perfect-Timing | Ja, optimal |
+
+### Bot-Verhaltenssystem
+- **Wahrnehmung**: Bot liest Spieler-Positionen, HP und aktiven Spell direkt aus dem Spielzustand (LOS-Regeln gelten auch für Bots)
+- **Entscheidungsbaum:**
+  ```
+  wenn eigene_hp < 30%  → Dodge + Abstand halten
+  wenn ziel_in_los      → Combo ausführen (mit Reaktionsverzögerung)
+  wenn crafting_möglich → Spell craften (Experte+)
+  sonst                 → Annähern an nächsten Spieler
+  ```
+- **Zufalls-Varianz**: ±20% auf alle Timing-Werte – damit Bots nicht roboterhaft wirken
+- Bots nutzen dieselbe `player_input.gd`-Abstraktion – `BotInput`-Klasse überschreibt `get_move_vector()` und `get_action()`
+
+### Technische Umsetzung
+```
+/scripts/bot_controller.gd        → Bot-KI-Hauptlogik
+/scripts/bot_input.gd             → Implementiert player_input-Interface
+/resources/bot_config.tres        → Schwierigkeits-Parameter
+```
+
+---
+
+## Vollständige Farbpalette
+
+### Spielfeld & Umgebung
+
+| Element | Farbe | Hex |
+|---------|-------|-----|
+| Arena-Hintergrund | Tiefschwarz | `#0A0A12` |
+| Tile Intakt | Dunkles Obsidian | `#1A1A2E` |
+| Tile Gerissen (Highlight) | Rift-Orange | `#FF6600` |
+| Tile Zerstört (Loch) | Tiefes Rot-Schwarz | `#1A0000` |
+| Rune-Cracks | Elektrisch Blau | `#00AAFF` |
+| Rune-Cracks Alternativ | Arkanes Violett | `#8B00FF` |
+| Arena-Wände | Dunkles Metall | `#2A2A3E` |
+| Wand-Circuitry (emissiv) | Emissiv Blau | `#0044FF` |
+| Glyph – Neutral | Blau | `#0088FF` |
+| Glyph – Transformation | Violett | `#AA00FF` |
+| Glyph – Overcharge | Amber | `#FFAA00` |
+
+### UI & HUD
+
+| Element | Farbe | Hex |
+|---------|-------|-----|
+| HUD-Hintergrund | Semi-transparent Dunkel | `#000000AA` |
+| HUD-Text | Weiß | `#FFFFFF` |
+| HUD-Text Sekundär | Hellgrau | `#AAAAAA` |
+| HP-Balken Voll | Grün | `#00FF88` |
+| HP-Balken Mittel | Gelb | `#FFCC00` |
+| HP-Balken Kritisch | Rot | `#FF2200` |
+| Spell-Slot Leer | Dunkelgrau | `#333344` |
+| Combo-Chain Aktiv | Gold | `#FFD700` |
+| Combo-Chain Fehler | Warnrot | `#FF4400` |
+
+### Elemente & Spells
+
+| Element | Farbe | Hex |
+|---------|-------|-----|
+| Feuer | Orange-Rot | `#FF4400` |
+| Eis | Eisblau | `#88DDFF` |
+| Blitz | Gelb-Weiß | `#FFFF88` |
+| Erde | Braun-Orange | `#AA6600` |
+| Schatten | Dunkles Lila | `#440066` |
+| Licht | Weiß-Gold | `#FFFFAA` |
+
+---
+
+## Progressions- & Unlock-System
+
+### Design-Absicht
+Kein Pay-to-Win. Alle spielerischen Inhalte sind von Beginn an verfügbar. Unlocks sind rein kosmetischer Natur und schaffen Langzeitmotivation ohne die Balance zu brechen.
+
+### Unlock-Kategorien
+
+| Kategorie | Unlock-Bedingung | Beispiele |
+|-----------|-----------------|---------|
+| **Spieler-Farb-Skins** | Matches gewonnen (10/25/50/100) | Neon-Pink, Arktisches Weiß, Lava-Rot |
+| **Rim-Glow-Muster** | Achievements | Pulsierend, Blitz-Statisch, Regenbogen |
+| **Arena-Farbthemen** | Stunden gespielt | Blutmond, Frostrift, Void-Schwarz |
+| **Waffen-Glüh-Farben** | Alle Rezepte eines Elements verwendet | Feuer-Schwert in reinem Weiß |
+| **Titel** (Lobby-Anzeige) | Besondere Leistungen | „Combo-Gott", „Architekt", „Unberührt" |
+
+### Persistenz
+- Fortschritt wird in `user://progress.tres` gespeichert
+- Steam-Achievements triggern parallel (kein doppeltes System)
+- Alles lokal für v1.0 – kein Server-seitiger Anti-Cheat nötig
+
+---
+
 Ende des Dokuments.
