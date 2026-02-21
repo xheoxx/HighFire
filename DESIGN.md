@@ -281,6 +281,8 @@ Jeder Spieler hat eine eindeutige Primärfarbe, die konsequent auf alle visuelle
 
 ## Combo-Grammatik & Motion-Input-Lexikon
 
+> **Resource-Datei:** `res://resources/combo_definitions.tres` — D-Pad-Sequenz-zu-Spell-Mapping (Modus R) und Pattern-Erkennungs-Tabellen. Vom `motion_input_parser.gd` geladen.
+
 ### Design-Absicht
 Motion-Combos sind die Sprache des Spiels. Jede Bewegung hat eine Bedeutung – der Spieler lernt eine Grammatik, keine Menüs. Inputs fühlen sich physisch an.
 
@@ -449,6 +451,8 @@ Die konkreten Combo-Definitionen pro Modus werden in Phase 2 (Stream A – Motio
 
 ## Spellcrafting-System
 
+> **Resource-Dateien:** Element-Definitionen und Kombinations-Tabellen → `res://resources/spell_definitions.tres` | Schaden, Reichweite, Cooldowns, Timeout-Werte → `res://resources/spell_values.tres`. Beide werden vom `ModLoader` zuerst geladen.
+
 ### Design-Absicht
 Spells werden in Echtzeit während des Kampfes durch Combo-Eingaben gewirkt – kein Panel, kein Inventar. Die Bewegung selbst ist die Magie. Das System ist in zwei Modi aufgeteilt: **Modus L** (generische Element-Grammatik, flexibel) und **Modus R** (feste Spell-Sequenzen, präzise). Magie ist Waffen überlegen – aber zeitlich limitiert. Wenn der Magie-Timeout abläuft, ist der Spieler auf seine Waffe angewiesen.
 
@@ -540,6 +544,8 @@ Magie ist Waffen überlegen – aber zeitlich begrenzt. Nach einer definierten A
 
 ## Weaponcrafting-System
 
+> **Resource-Datei:** `res://resources/weapon_definitions.tres` — Archetypen, Stats und Upgrade-Nodes. Nie als Dictionary im Code hardcoden.
+
 ### Design-Absicht
 Waffen sind der verlässliche Fallback wenn die Magie im Timeout ist. Sie sind nie so mächtig wie Magie – aber immer verfügbar. Weaponcrafting passiert **zwischen Runden oder in ruhigen Kampfmomenten** über ein Panel, das mit `X halten (0.5s)` geöffnet wird. Materialien werden durch Terrain-Zerstörung gesammelt.
 
@@ -617,6 +623,8 @@ Jede Aktion braucht eine sofortige, spürbare Rückmeldung. Juice macht den Unte
 ---
 
 ## Balance-Parameter
+
+> **Resource-Datei:** `res://resources/balance_config.tres` — alle Werte dieser Sektion werden daraus geladen. Nie als `const` hardcoden.
 
 ### Basis-Spielerwerte
 

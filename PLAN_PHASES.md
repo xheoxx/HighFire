@@ -63,6 +63,25 @@ Design-Ergänzungen und -Korrekturen die nach Abschluss von Phase 0 entstehen. L
 
 ---
 
+#### Iteration 2 – Spellcrafting-Redesign & Mod-System ✅ ABGESCHLOSSEN
+**Geänderte Dokumente**: `DESIGN.md`, `PLAN_PHASES.md`
+
+**Inhalt:**
+- Spellcrafting vollständig neu: kein Panel, kein Inventar – Combo-Eingabe selbst ist der Spell
+- `L1`/`R1`-Fehler korrigiert → korrekte Bezeichnungen `L` und `R` (SNES-Layout)
+- Weaponcrafting-Öffner geändert von `R1` auf `X halten (0.5s)`
+- Magie-Timeout als Kern-Limiter eingeführt (Werte offen bis Testphase)
+- HUD-Integration: Magie-Gauge als Glüh-Indikator in Spieler-Silhouette (kein Mana-Balken)
+- Mod-System dokumentiert: Ebene 1 (Data Mods via `.tres`), Ebene 2 (Script Mods via `.gd`), ModLoader-Architektur
+- Resource-Hinweise in alle relevanten DESIGN.md-Abschnitte eingefügt (Balance, Spell, Combo, Weapon)
+
+**Auswirkungen auf Implementierung:**
+- Phase 1 Stream E: `ModLoader` als ersten AutoLoad registrieren
+- Phase 1 Stream F (NEU): ModLoader-Infrastruktur + alle Resource-Dateien anlegen
+- Phase 2 Stream B: Spellcrafting ohne Panel; `crafting_ui.tscn` entfällt, `magic_gauge_ui.tscn` kommt neu hinzu; Ressource `spell_recipes.tres` → ersetzt durch `spell_definitions.tres` + `spell_values.tres`
+
+---
+
 ### Phase 1 – Core Scene & Movement
 **Ziel**: Spielbares Grundgerüst mit Bewegung, Dodge, Target-Lock und zerstörbarem Terrain in einer Arena. Am Ende dieser Phase können 2 Spieler sich bewegen, ausweichen und Ziele wechseln.
 
@@ -232,7 +251,7 @@ project.godot:
                     ≥ 200ms = Halten) wird im Motion-Input-Parser (Phase 2 Stream A)
                     implementiert – nicht in project.godot. Beide Action-Sets müssen
                     trotzdem definiert sein damit InputMap sie kennt.
-  [autoload]      → ArenaStateManager, DamageSystem, MusicManager
+  [autoload]      → ModLoader (erster Eintrag!), ArenaStateManager, DamageSystem, MusicManager
   [layer_names]   → Physics-Layer lt. DESIGN.md (Spieler, Terrain, Projektile, Wände, Raycast)
   [display]       → Viewport-Größe: 1920×1080, Stretch-Mode: canvas_items
 ```
@@ -242,7 +261,7 @@ project.godot:
 
 **Akzeptanzkriterien:**
 - [ ] Alle Input-Actions in `project.godot` definiert (mind. 12 Actions)
-- [ ] AutoLoad-Pfade korrekt und Dateien existieren
+- [ ] AutoLoad-Reihenfolge korrekt: ModLoader als erster Eintrag, danach ArenaStateManager, DamageSystem, MusicManager
 - [ ] Physics-Layer 1–5 benannt lt. DESIGN.md
 - [ ] Viewport-Größe auf 1920×1080 gesetzt
 
@@ -250,6 +269,48 @@ project.godot:
 - **Kein anderer Stream** darf `project.godot` anfassen – bei Bedarf Issue an Stream E
 - Input-Action-Namen müssen exakt mit `InputEvent`-Abfragen in anderen Streams übereinstimmen
 - AutoLoad-Pfade relativ zum Projekt-Root angeben (`res://scripts/...`)
+
+---
+
+#### Stream F – ModLoader & Resource-Infrastruktur
+**Abhängigkeit**: Stream E muss `project.godot` mit dem `ModLoader`-AutoLoad-Eintrag vorbereitet haben.
+
+**Zu erstellende Dateien:**
+```
+/scripts/mod_loader.gd              ← AutoLoad (erster AutoLoad in project.godot)
+/scripts/hook_registry.gd           ← Script-Mod-Hook-Verwaltung zur Laufzeit
+/resources/mod_registry.tres        ← Liste geladener Mods (Name, Version, Hash)
+/resources/balance_config.tres      ← Alle Balance-Werte lt. DESIGN.md
+/resources/spell_definitions.tres   ← Element-Kodierung, Kombinations-Tabelle
+/resources/spell_values.tres        ← Schaden, Reichweite, Cooldown pro Spell
+/resources/combo_definitions.tres   ← D-Pad-Sequenz → Spell-Mapping (Modus R)
+/resources/weapon_definitions.tres  ← Archetypen, Stats, Upgrade-Nodes
+/resources/bot_config.tres          ← KI-Schwierigkeitsstufen-Parameter
+/resources/arena_config.tres        ← Spawn-Positionen, Tile-Config pro Arena
+```
+
+**Zu implementierende Logik:**
+- `mod_loader.gd`: scannt `user://mods/`, liest `mod.cfg`, prüft Kompatibilitäts-Version
+- Ebene 1: `.tres`-Dateien aus Mod-Ordner über Basis-Resources mergen (fehlende Felder fallen auf Basiswert zurück)
+- Ebene 2: `.gd`-Dateien laden und in `hook_registry.gd` eintragen
+- Signal `mod_loading_complete` emittieren → restliche AutoLoads können starten
+- Online-Check: Script-Mods werden deaktiviert wenn `network_manager` eine aktive Online-Session meldet
+- Alle Resource-Dateien mit sinnvollen Startwerten aus `DESIGN.md` befüllen (keine leeren Stubs)
+
+**Koordination mit Stream E:**
+- Stream E muss in `project.godot` den AutoLoad `ModLoader` als **ersten** Eintrag eintragen (vor `ArenaStateManager`, `DamageSystem`, `MusicManager`)
+
+**Akzeptanzkriterien:**
+- [ ] `mod_loader.gd` startet ohne Fehler auch wenn `user://mods/` leer ist
+- [ ] Alle 7 Resource-Dateien existieren und haben valide Startwerte
+- [ ] `hook_registry.gd` registriert und ruft Hooks korrekt auf
+- [ ] Laden einer Test-Mod aus `user://mods/test_mod/` überschreibt einen Wert in `balance_config.tres`
+- [ ] Signal `mod_loading_complete` wird korrekt gefeuert
+
+**Fallstricke:**
+- `user://mods/` existiert auf manchen Systemen nicht → immer mit `DirAccess.make_dir_recursive_absolute()` anlegen
+- Resource-Merge nicht direkt auf `res://`-Dateien schreiben (schreibgeschützt im Export) – in-memory Kopien erstellen und via `ResourceLoader.load_threaded_request()` mergen
+- `load()` von externen `.gd`-Dateien benötigt `ResourceLoader.exists()` als Guard
 
 ---
 
@@ -314,35 +375,56 @@ const COMBOS = {
 ---
 
 #### Stream B – Spellcrafting
-**Abhängigkeit**: Stream A dieser Phase.
+**Abhängigkeit**: Stream A dieser Phase + Phase 1 Stream F (ModLoader, damit `spell_definitions.tres` / `spell_values.tres` zur Verfügung stehen).
+
+> **Kein Panel, kein Inventar.** Die Combo-Eingabe selbst ist der Spell. Alle Werte kommen aus `spell_definitions.tres` und `spell_values.tres` (angelegt von Phase 1 Stream F).
 
 **Zu erstellende Dateien:**
 ```
-/scripts/spell_system.gd          ← Spell-Verwaltung & Casting
-/scripts/spell_projectile.gd      ← Projektil-Bewegung & Hit
+/scripts/spell_system.gd          ← Spell-Verwaltung & Casting (liest spell_definitions/spell_values)
+/scripts/spell_projectile.gd      ← Projektil-Bewegung & Kollision
 /scenes/spell_projectile.tscn     ← Projektil-Node
-/scenes/crafting_ui.tscn          ← Crafting-Panel HUD
-/scripts/crafting_ui.gd           ← Panel-Logik
-/resources/spell_recipes.tres     ← Alle Rezepte aus DESIGN.md
+/scenes/magic_gauge_ui.tscn       ← Magie-Verfügbarkeits-Anzeige (Glüh-Indikator, kein Mana-Balken)
+/scripts/magic_gauge_ui.gd        ← Gauge-Logik (reagiert auf Signal magic_changed)
 ```
 
 **Zu implementierende Logik:**
-- `spell_system.gd`: Echtzeit-Spell-Crafting via Combo-Modi (L = generisch, R = fest, B = lange Combos), kein Panel, kein Inventar
-- Magie-Timeout: Verfügbarkeitszeit und Regeneration als konfigurierbare Parameter (`magic_active_time`, `magic_regen_time`) – ⚠ Werte offen bis Testphase
-- Crafting-Flow: `L/R halten + D-Pad-Sequenz (max. 0.4s) + B` → Spell wird direkt gewirkt
-- `spell_projectile.gd`: Bewegung via `velocity`, Kollision mit Spielern und Terrain prüfen
-- Spell-Effekte per Dictionary: `{Spell-Typ: Callable}` für saubere Erweiterbarkeit
+- `spell_system.gd`: lauscht auf `combo_recognized(combo_name, mode)`-Signal aus `motion_input_parser.gd`
+- Modus L (L halten): Zwei-Element-Grammatik → Spell aus `spell_definitions.tres`-Kombinations-Tabelle nachschlagen
+- Modus R (R halten): Feste Sequenzen → direkt benannten Spell aus `combo_definitions.tres` abrufen
+- Modus B (L+R halten): Lange Combos (3+ Inputs), mächtigste Spells – Sequenzen kommen aus `combo_definitions.tres`
+- Magie-Timeout: `magic_active_time` und `magic_regen_time` aus `spell_values.tres` lesen – ⚠ Startwerte offen bis Testphase
+- Regenerations-Trigger: konfigurierbar (`passiv` / `durch Waffen-Treffer` / `beides`) – aus `spell_values.tres`
+- Magie-Gauge-Signal: `spell_system` emittiert `magic_changed(current_ratio: float)` → `magic_gauge_ui.gd` reagiert
+- HUD-Integration: kein separater Mana-Balken – Glüh-Indikator wird in Spieler-Silhouette integriert (Rim-Glow-Intensität)
+- `spell_projectile.gd`: Bewegung via `velocity`, Kollision mit Spielern (Physics-Layer Spieler) und Terrain prüfen
+- Spell-Effekte via Hook: `spell_system` ruft `hook_registry.run_hook("spell_effect_hook", ...)` vor Schadensanwendung
+- Spell-Effekt-Dispatcher: Dictionary `{spell_name: Callable}` für saubere lokale Erweiterbarkeit (Fallback wenn kein Mod-Hook)
+
+**Spell-Effekte (lt. DESIGN.md):**
+- Brennen (DoT): `Timer`-Node auf Ziel, tickt alle 0.5s – kein `_process()`-Loop
+- Verlangsamung: Speed-Multiplikator auf `player.gd` als Property, endet nach Timer
+- Einfrieren: wenn Eis-Stack ≥ 2 → `CharacterBody2D.set_physics_process(false)` für kurze Dauer
+- Betäubung (Blitz): Input-Block-Flag auf `player_input.gd`
+- Terrain-Zerstörung (Erde): `arena_grid.gd`-Signal `force_destroy_tile(position)` senden
+- Heilung (Licht): `health_component.heal(amount)` aufrufen
+- LOS-Blocker (Schatten): Partikel-Cloud-Node instanziieren, beeinflusst Raycast-Layer
 
 **Akzeptanzkriterien:**
-- [ ] Alle 6 Element-Kombinationen aus `DESIGN.md` (Modus L) funktionieren
-- [ ] Alle 6 festen Spell-Sequenzen (Modus R) funktionieren
-- [ ] Magie-Timeout sperrt Modus L/R nach Ablauf korrekt
-- [ ] Projektile treffen Spieler und Terrain
-- [ ] Spell-Effekte (DoT, Verlangsamung etc.) werden korrekt angewendet
+- [ ] Alle 6 Modus-L-Kombinationen aus `DESIGN.md` werden korrekt erkannt und gewirkt
+- [ ] Alle 6 Modus-R-Sequenzen aus `DESIGN.md` funktionieren
+- [ ] Magie-Timeout sperrt Modus L/R/B nach Ablauf und zeigt Gauge korrekt an
+- [ ] Magie regeneriert sich nach konfiguriertem Trigger
+- [ ] Projektile treffen Spieler und Terrain mit korrekten Kollisions-Layern
+- [ ] Alle 7 Spell-Effekte (DoT, Slow, Freeze, Stun, Terrain, Heal, LOS) werden korrekt angewendet
+- [ ] Kein Spell wird gewirkt wenn Magie-Timeout aktiv (Eingabe verfällt lautlos)
+- [ ] Werte aus `spell_values.tres` werden geladen – kein Wert ist im Code hardcodiert
 
 **Fallstricke:**
-- Projektil-Instanziierung: `preload()` statt `load()` für Performance
-- Spell-Effekte wie DoT (Brennen) als `Timer`-Node auf dem Ziel, nicht als `_process()`-Loop
+- Projektil-Instanziierung: `preload()` statt `load()` für Performance (Szene bei Spielstart vorladen)
+- `spell_definitions.tres`-Lookup: Kombinations-Reihenfolge ignorieren (Feuer+Blitz = Blitz+Feuer) → Set statt Array als Key
+- Magie-Gauge: `Tween` für smooth Leerung/Füllung, kein abrupter Sprung
+- Modus B sperrt Bewegung: `player_input.gd` muss Flag `combo_mode_b_active` prüfen
 
 ---
 
