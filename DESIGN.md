@@ -751,25 +751,36 @@ Dieses Dokument dient als:
 ## Musik-Konzept
 
 ### Design-Absicht
-Die Musik unterstreicht die Phasen der Arena, ohne die Gameplay-Sounds zu übertönen. Sie ist dynamisch – sie reagiert auf den Spielzustand.
+Die Musik unterstreicht die Phasen der Arena, ohne die Gameplay-Sounds zu übertönen. Sie ist dynamisch – sie reagiert auf den Spielzustand. Der Kernstil im Combat ist eine Fusion aus **Power Metal** und **Drum and Bass**: epische Gitarrenmelodik trifft auf aggressive DnB-Breaks. Referenzpunkte: Pendulum („Blood Sugar", „Propane Nightmares"), Mick Gordon (Doom Eternal), Perturbator.
+
+### BPM & Timing-Struktur
+
+| Element | BPM | Gefühl |
+|---------|-----|--------|
+| **Melodie / Gitarre** | 85 BPM (Halbzeit) | Episch, atmend, Power Metal |
+| **DnB-Breaks** | 170 BPM (Doppelzeit) | Aggressiv, treibend, präzise |
+| **Menü / Basis** | 85 BPM | Ruhig, atmosphärisch |
+
+Alle Layer starten synchron auf demselben Grid (85 BPM Grundraster). Die DnB-Percussion läuft intern auf Doppelzeit – das ist exakt die Technik die Pendulum verwendet.
 
 ### Musik-Layer
 
-| Layer | Wann aktiv | Charakter |
-|-------|-----------|-----------|
-| **Basis-Loop** | Immer | Dunkler, atmosphärischer Ambient (Synth-Pads, tiefe Drone) |
-| **Combat-Layer** | `COMBAT`-State | Schnelles Percussion-Pattern, treibende Synth-Bassline |
-| **Intensity-Layer** | HP < 30% bei irgendeinem Spieler | Zusätzliche hohe Synth-Stabs, mehr Dringlichkeit |
-| **Finale-Layer** | Nur 2 Spieler übrig | Volle Orchestrierung, alle Layer auf Maximum |
-| **Round-End-Stinger** | `ROUND_END`-State | Kurzer, dramatischer Abschlussakord (1–2 Sekunden) |
-| **Menü-Theme** | Hauptmenü | Reduzierte Version des Basis-Loops, ruhig und einladend |
+| Layer | Wann aktiv | Stil & Charakter |
+|-------|-----------|-----------------|
+| **Basis-Loop** | Immer (auch im Menü, gedämpft) | Atmosphärische E-Gitarren-Harmonie (clean, langsam), tiefer Synth-Drone, kein Schlagzeug – Spannung ohne Druck |
+| **Combat-Layer** | `COMBAT`-State | DnB-Breaks bei 170 BPM (rollende Amen-Break-Variante) + verzerrtes Power-Metal-Gitarrenriff; Bassline treibend und fett |
+| **Intensity-Layer** | HP < 30% bei irgendeinem Spieler | Gitarren-Solo-Fragment oder Doppel-Bass-Drum-Eskalation; höhere Frequenzen, mehr Dringlichkeit |
+| **Finale-Layer** | Nur 2 Spieler übrig | Alles auf Maximum: Gitarre + volle DnB-Energie + kurze Orchesterakkorde als dramatische Hits |
+| **Round-End-Stinger** | `ROUND_END`-State | Kurzer Power-Chord mit Hall (1–2 Sekunden), dann Stille – kein sofortiger Loop-Einstieg |
+| **Menü-Theme** | Hauptmenü | Basis-Loop solo, 85 BPM, clean Gitarre + Synth-Pad, einladend aber dunkel |
 
 ### Technische Umsetzung
 - Musik als mehrere `AudioStreamPlayer`-Nodes mit synchronem Start
-- Layer-Aktivierung via `volume_db`-Fade (Tween), nicht via Play/Stop
-- Alle Layer sind rhythmisch synchron (gleiche BPM, gleicher Startpunkt)
-- BPM: 140 (passend zum Gameplay-Tempo)
-- Initiale Musik via Godot `AudioStreamOggVorbis` oder prozedurale Generierung
+- Layer-Aktivierung via `volume_db`-Fade (Tween, 0.5s), nicht via Play/Stop
+- Alle Layer starten gleichzeitig bei Spielstart – Lautstärke steuert was hörbar ist
+- Grundraster: **85 BPM** (Melodie/Gitarre), DnB-Percussion intern auf **170 BPM**
+- Initiale Musik via Godot `AudioStreamOggVorbis`; OGG-Dateien müssen Loop-Punkte auf Beat-Grenzen gesetzt haben
+- Audio-Bus „Music" in `project.godot` anlegen (getrennt von SFX-Bus)
 
 ---
 

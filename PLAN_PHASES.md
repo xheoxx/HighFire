@@ -748,7 +748,7 @@ const COMBOS = {
 **Zu implementierende Logik:**
 - `MusicManager` als AutoLoad mit `AudioStreamPlayer`-Nodes pro Layer
 - Layer-Aktivierung via `volume_db`-Tween (lt. `DESIGN.md` Musik-Konzept)
-- Alle Layer rhythmisch synchron (140 BPM), starten gleichzeitig
+- Alle Layer rhythmisch synchron (Grundraster 85 BPM, DnB-Percussion intern 170 BPM), starten gleichzeitig
 - State-Listening: `ArenaStateManager`-Signale triggern Layer-Wechsel
   - `LOBBY` → menu_theme aktiv, alle anderen aus
   - `COMBAT` → basis_loop + combat_layer
