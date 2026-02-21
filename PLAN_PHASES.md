@@ -4,7 +4,7 @@
 | Dokument | Inhalt |
 |----------|--------|
 | `DESIGN.md` | Vollständiges Design: Visuals, Combos, Crafting, Balance, Kamera, Tutorial, Accessibility, Menüs, Bot-KI, Progression |
-| `moodboard.md` | Bildgenerator-Prompts für 6 Stimmungswelten (Arena, Gameplay, Crafting, Charakter, HUD, Menü) |
+| `MOODBOARD.md` | Bildgenerator-Prompts für 6 Stimmungswelten (Arena, Gameplay, Crafting, Charakter, HUD, Menü) |
 | `AGENTS.md` | Persona, Sprache, Koordinationsregeln, Branch-Konventionen, Teststrategie |
 
 ---
@@ -557,7 +557,7 @@ const COMBOS = {
 - `VBoxContainer` → Button-Layout
 - `HSlider` → Lautstärke
 - `OptionButton` → Auflösung, Arena-Auswahl
-- `ColorRect` → Hintergrund mit `moodboard.md`-Farbpalette
+- `ColorRect` → Hintergrund mit `MOODBOARD.md`-Farbpalette
 
 **Akzeptanzkriterien:**
 - [ ] Hauptmenü startet bei Spielstart (Autoload oder default scene)
