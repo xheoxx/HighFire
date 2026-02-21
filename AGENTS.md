@@ -21,6 +21,7 @@
 ### Grundregeln
 - **Kein Godot-Editor verfügbar** in der Cloud – alle Szenen (`.tscn`) und Skripte (`.gd`) werden als Textdateien erstellt und gepusht
 - Der Auftraggeber öffnet den Godot-Editor lokal, um Änderungen zu testen
+- **Beim Start einer neuen Session: sofort alle drei Kerndokumente vollständig einlesen** – `plan_phases.md`, `DESIGN.md` und `moodboard.md` – bevor irgendeine Aufgabe begonnen wird
 - Vor jedem größeren Schritt `plan_phases.md` lesen, um den aktuellen Stand zu kennen
 
 ### Ordnerstruktur (einhalten!)

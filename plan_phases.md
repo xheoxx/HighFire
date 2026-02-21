@@ -42,6 +42,27 @@ Alle Design-Entscheidungen getroffen und in `DESIGN.md` dokumentiert:
 
 ---
 
+### Phase 0B – Design Iteration 🔄 IN ÜBERARBEITUNG
+Design-Ergänzungen und -Korrekturen die nach Abschluss von Phase 0 entstehen. Läuft parallel zu Phase 1 solange keine Implementierungsabhängigkeiten betroffen sind. Jede Iteration wird als eigener Commit dokumentiert.
+
+#### Iteration 1 – L/R-Input-System & Combo-Modi ✅ ABGESCHLOSSEN
+**Geänderte Dokumente**: `DESIGN.md`
+
+**Inhalt:**
+- L/R-Buttons neu definiert: Tippen (< 200ms) = Target-Management, Halten (≥ 200ms) = Combo-Modus
+- Target-Management: L+R tippen = Auto-Lock, L tippen = Ziel prev, R tippen = Ziel next
+- Drei Combo-Modi eingeführt: Modus L (Defensiv/Zauber), Modus R (Offensiv/Nahkampf), Modus B (Mächtigste Combos, Stillstand)
+- Zielwechsel im Combo-Modus als `⚠ EXPERIMENTELL` markiert (nach Testphase evaluieren)
+- Modus-B-Momentum als Achievement-Unlock `momentum_master` eingeführt (`⚠ Balance-Check nach Testphase`)
+- Achievement-Liste in `DESIGN.md` um `momentum_master` ergänzt
+- Progressions-Unlock-Tabelle um Modus-B-Momentum ergänzt
+
+**Auswirkungen auf Implementierung:**
+- Phase 1 Stream E: neue Input-Actions `target_lock`, `combo_mode_l`, `combo_mode_r`, `combo_mode_b`
+- Phase 2 Stream A: L/R-Tippen/Halten-Logik im Motion-Input-Parser implementieren
+
+---
+
 ### Phase 1 – Core Scene & Movement
 **Ziel**: Spielbares Grundgerüst mit Bewegung, Dodge, Target-Lock und zerstörbarem Terrain in einer Arena. Am Ende dieser Phase können 2 Spieler sich bewegen, ausweichen und Ziele wechseln.
 
@@ -199,9 +220,18 @@ project.godot:
   [input]         → Actions lt. DESIGN.md Controller-Layout:
                     move_up, move_down, move_left, move_right,
                     action_attack, action_dodge, action_element, action_special,
-                    target_prev, target_next, menu_pause, menu_info
+                    target_lock, target_prev, target_next,
+                    combo_mode_l, combo_mode_r, combo_mode_b,
+                    menu_pause, menu_info
                     + Analog-Erweiterungen: aim_x, aim_y, modifier_left, modifier_right
                     + P1 Keyboard + P2 Keyboard (lt. Tastatur-Fallback-Tabelle in DESIGN.md)
+                    
+                    Hinweis L/R-System: target_lock/target_prev/target_next und
+                    combo_mode_l/combo_mode_r/combo_mode_b nutzen dieselben physischen
+                    Tasten (L/R). Die Tippen/Halten-Unterscheidung (< 200ms = Tippen,
+                    ≥ 200ms = Halten) wird im Motion-Input-Parser (Phase 2 Stream A)
+                    implementiert – nicht in project.godot. Beide Action-Sets müssen
+                    trotzdem definiert sein damit InputMap sie kennt.
   [autoload]      → ArenaStateManager, DamageSystem, MusicManager
   [layer_names]   → Physics-Layer lt. DESIGN.md (Spieler, Terrain, Projektile, Wände, Raycast)
   [display]       → Viewport-Größe: 1920×1080, Stretch-Mode: canvas_items
@@ -246,6 +276,18 @@ project.godot:
 - Pattern-Matching: Buffer gegen `combo_definitions`-Dictionary prüfen (längster Match gewinnt)
 - Perfect-Timing-Bonus: wenn gesamte Geste < 0.15s → Signal `perfect_input` emittieren
 - `combo_chain.gd`: `Line2D`-basierte Runen-Visualisierung, jeder Input fügt ein Element hinzu
+
+**L/R-Tippen/Halten-Logik (Combo-Modus-System lt. DESIGN.md):**
+- `_input(event)` überwacht alle L/R-Button-Events mit Timestamp
+- Bei Button-Release: wenn Haltezeit < 200ms → Tippen-Aktion auslösen (Target-Management)
+- Bei Button-Hold ≥ 200ms: Combo-Modus aktivieren, D-Pad-Inputs in Combo-Buffer leiten
+- Aktiver Combo-Modus wird als Enum gespeichert: `{NONE, MODE_L, MODE_R, MODE_B}`
+- Im Combo-Modus steuert D-Pad **nicht** die Bewegung (außer Modus B mit Momentum-Unlock)
+
+**Zielwechsel im Combo-Modus ⚠ EXPERIMENTELL:**
+- Wenn Modus R aktiv und L-Button < 200ms gedrückt → `target_prev` Signal senden
+- Wenn Modus L aktiv und R-Button < 200ms gedrückt → `target_next` Signal senden
+- Falls in Tests unzuverlässig: Feature deaktivieren, Zielwechsel nur im Normalmodus
 
 **Combo-Definitions-Format:**
 ```gdscript

@@ -342,15 +342,77 @@ SNES-Layout als Referenz: Das Spiel muss mit nur 12 Inputs (D-Pad 4×, A/B/X/Y, 
 
 | Button | Funktion | Godot-Action-Name |
 |--------|----------|-------------------|
-| **D-Pad** | Bewegung (8 Richtungen) + Motion-Input-Gesten | `move_up`, `move_down`, `move_left`, `move_right` |
+| **D-Pad** | Bewegung (8 Richtungen) + Motion-Input-Gesten (im Combo-Modus: nur Combo-Input) | `move_up`, `move_down`, `move_left`, `move_right` |
 | **B** | Angriff / Spell auslösen (Finish-Button) | `action_attack` |
 | **A** | Dodge / Ausweichen | `action_dodge` |
 | **Y** | Element wechseln (tippen) / Spellcrafting-Menü (halten 0.5s) | `action_element` |
 | **X** | Waffen-Spezial / Interaktion | `action_special` |
-| **L** | Target-Lock / Zielwechsel links | `target_prev` |
-| **R** | Target-Lock / Zielwechsel rechts | `target_next` |
+| **L** | Siehe L/R-System unten | `combo_mode_l`, `target_prev` |
+| **R** | Siehe L/R-System unten | `combo_mode_r`, `target_next` |
 | **Start** | Pause-Menü | `menu_pause` |
 | **Select** | Scoreboard / Info-Overlay | `menu_info` |
+
+### L/R-Input-System (Tippen vs. Halten)
+
+L und R übernehmen je nach Eingabedauer unterschiedliche Funktionen. Grundprinzip: **kurz tippen (< 200ms) = Target-Management, halten (≥ 200ms) = Combo-Modus**.
+
+#### Target-Management (kein Combo-Modus aktiv)
+
+| Input | Funktion | Godot-Action |
+|-------|----------|-------------|
+| L + R gleichzeitig tippen (< 200ms) | Nächsten Gegner auto-markieren (Target-Lock) | `target_lock` |
+| L tippen (< 200ms) | Ziel wechseln gegen Uhrzeigersinn | `target_prev` |
+| R tippen (< 200ms) | Ziel wechseln im Uhrzeigersinn | `target_next` |
+
+#### Combo-Modi (Halten ≥ 200ms)
+
+| Input | Modus | D-Pad-Funktion | Bewegung |
+|-------|-------|----------------|----------|
+| R halten | **Modus R** – Offensiv / Nahkampf-Combos | Combo-Input + Bewegung | Normal |
+| L halten | **Modus L** – Defensiv / Zauber-Combos | Combo-Input + Bewegung | Normal |
+| L + R halten | **Modus B** – Mächtigste Combos | Nur Combo-Input | Stillstand (v1.0) |
+
+#### Zielwechsel im Combo-Modus ⚠ EXPERIMENTELL
+
+Wenn ein Combo-Modus aktiv ist, kann das Ziel durch kurzes Antippen der jeweils anderen Schultertaste gewechselt werden:
+
+| Input | Funktion |
+|-------|----------|
+| Modus R aktiv + L tippen (< 200ms) | Ziel wechseln |
+| Modus L aktiv + R tippen (< 200ms) | Ziel wechseln |
+
+> **Hinweis**: Diese Mechanik ist experimentell. Das 200ms-Zeitfenster muss in der Testphase kalibriert werden. Falls die Tippen/Halten-Unterscheidung in Stresssituationen nicht zuverlässig funktioniert, wird Zielwechsel im Combo-Modus deaktiviert.
+
+---
+
+## Combo-Modi
+
+### Design-Absicht
+Die drei Combo-Modi erweitern die Kampfgrammatik ohne neue Buttons zu verbrauchen. L und R als Modifier schaffen drei distinkte Kampfstile die sich unterschiedlich anfühlen und unterschiedliche taktische Situationen begünstigen.
+
+### Modus-Übersicht
+
+| Modus | Aktivierung | Stil | D-Pad | Bewegung |
+|-------|-------------|------|-------|----------|
+| **Modus R** | R ≥ 200ms halten | Offensiv – Nahkampf-Combos | Combo + Bewegung | Normal |
+| **Modus L** | L ≥ 200ms halten | Defensiv – Zauber-Combos | Combo + Bewegung | Normal |
+| **Modus B** | L + R ≥ 200ms halten | Mächtigste Combos | Nur Combo-Input | Stillstand |
+
+### Modus B – Stillstand-Regel
+Im Modus B steht der Spieler still – er ist verwundbar und muss sich bewusst **vor** der Aktivierung positionieren. Das erzeugt taktische Tiefe: wann ist der richtige Moment für Modus B?
+
+### Modus-B-Momentum (Unlock) ⚠ Balance-Check nach Testphase erforderlich
+Nach Freischaltung via Achievement `momentum_master` kann der Spieler in Modus B aktivieren während er sich noch bewegt – das Momentum bleibt erhalten, D-Pad steuert jedoch nur noch Combo-Input. Der Spieler läuft dann in der letzten Bewegungsrichtung weiter, bis Modus B beendet wird oder er eine Wand trifft.
+
+> **Hinweis**: Falls dieses Feature die Balance bricht, wird es nach der Testphase entfernt.
+
+### Combo-Inhalte
+Die konkreten Combo-Definitionen pro Modus werden in Phase 2 (Stream A – Motion-Input Parser) festgelegt. Grundregel:
+- **Modus R**: Nahkampf-Finisher, hoher Direktschaden, kurze Reichweite
+- **Modus L**: Zauber-Combos, Effekte (DoT, Verlangsamung, Schild), mittlere Reichweite
+- **Modus B**: Kombinationen aus beiden, hoher Ressourcenverbrauch
+
+---
 
 ### Analog-Erweiterung (wenn verfügbar)
 
@@ -872,11 +934,26 @@ Kein Pay-to-Win. Alle spielerischen Inhalte sind von Beginn an verfügbar. Unloc
 | **Arena-Farbthemen** | Stunden gespielt | Blutmond, Frostrift, Void-Schwarz |
 | **Waffen-Glüh-Farben** | Alle Rezepte eines Elements verwendet | Feuer-Schwert in reinem Weiß |
 | **Titel** (Lobby-Anzeige) | Besondere Leistungen | „Combo-Gott", „Architekt", „Unberührt" |
+| **Modus-B-Momentum** | Achievement `momentum_master` (Bedingung offen) | Bewegung bleibt in Modus B erhalten ⚠ Balance-Check nach Testphase |
 
 ### Persistenz
 - Fortschritt wird in `user://progress.tres` gespeichert
 - Steam-Achievements triggern parallel (kein doppeltes System)
 - Alles lokal für v1.0 – kein Server-seitiger Anti-Cheat nötig
+
+### Achievement-Liste
+
+| ID | Name | Bedingung | Unlock |
+|----|------|-----------|--------|
+| `first_kill` | „Erster Bluttest" | Ersten Kill landen | – |
+| `combo_master` | „Combo-Meister" | Z-Motion 10× erfolgreich | – |
+| `architect` | „Zerstörer" | 500 Tiles zerstören | – |
+| `craftsman` | „Schmiedemeister" | Alle 5 Waffen-Archetypen craften | – |
+| `elementalist` | „Elementarmagier" | Alle 6 Rezepte einmal verwenden | – |
+| `survivor` | „Überlebender" | Match ohne Dodge-Nutzung gewinnen | – |
+| `momentum_master` | „Unaufhaltsam" | *(Bedingung offen – wird nach Testphase festgelegt)* | Modus-B-Momentum ⚠ Balance-Check nach Testphase |
+
+> **Hinweis zu `momentum_master`**: Modus-B-Momentum ist das einzige Unlock das einen spielerischen Unterschied macht (alle anderen sind kosmetisch). Falls es die Balance bricht, wird es nach der Testphase entfernt.
 
 ---
 
