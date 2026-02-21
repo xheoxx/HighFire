@@ -156,7 +156,7 @@ Design-Ergänzungen und -Korrekturen die nach Abschluss von Phase 0 entstehen. L
 
 **Zu implementierende Logik:**
 - `target_system.gd`: pro Spieler wird ein Ziel-Spieler gespeichert
-- Target-Switch: `L1`-Tastendruck → nächsten Spieler im Uhrzeigersinn (nach Winkel sortiert)
+- Target-Switch: `L tippen` (< 200ms) → nächsten Spieler im Uhrzeigersinn (nach Winkel sortiert)
 - LOS-Check via `PhysicsRayQueryParameters2D`: Raycast von Spieler zu Ziel, prüft ob Terrain blockiert
 - Ziel-Indikator folgt dem Ziel-Spieler via `global_position`
 - Farbe des Rings = Farbe des angreifenden Spielers (lt. `DESIGN.md`)
@@ -327,18 +327,18 @@ const COMBOS = {
 ```
 
 **Zu implementierende Logik:**
-- `spell_system.gd`: 3 Spell-Slots pro Spieler, Element-Inventar (max. 2 pro Element)
-- Element-Sammlung: Signal von `damage_system.gd` → Element zu Inventar hinzufügen
-- Crafting-Flow: `L1` Langdruck → Panel öffnen, 2 Elemente wählen → Spell erzeugen
+- `spell_system.gd`: Echtzeit-Spell-Crafting via Combo-Modi (L = generisch, R = fest, B = lange Combos), kein Panel, kein Inventar
+- Magie-Timeout: Verfügbarkeitszeit und Regeneration als konfigurierbare Parameter (`magic_active_time`, `magic_regen_time`) – ⚠ Werte offen bis Testphase
+- Crafting-Flow: `L/R halten + D-Pad-Sequenz (max. 0.4s) + B` → Spell wird direkt gewirkt
 - `spell_projectile.gd`: Bewegung via `velocity`, Kollision mit Spielern und Terrain prüfen
 - Spell-Effekte per Dictionary: `{Spell-Typ: Callable}` für saubere Erweiterbarkeit
 
 **Akzeptanzkriterien:**
-- [ ] Alle 6 Rezepte aus `DESIGN.md` funktionieren
-- [ ] Crafting-UI öffnet/schließt korrekt
+- [ ] Alle 6 Element-Kombinationen aus `DESIGN.md` (Modus L) funktionieren
+- [ ] Alle 6 festen Spell-Sequenzen (Modus R) funktionieren
+- [ ] Magie-Timeout sperrt Modus L/R nach Ablauf korrekt
 - [ ] Projektile treffen Spieler und Terrain
-- [ ] Spell-Slots im HUD werden korrekt aktualisiert
-- [ ] Element-Inventar wird nach Crafting geleert
+- [ ] Spell-Effekte (DoT, Verlangsamung etc.) werden korrekt angewendet
 
 **Fallstricke:**
 - Projektil-Instanziierung: `preload()` statt `load()` für Performance
@@ -362,7 +362,7 @@ const COMBOS = {
 - Material-Inventar: wird bei `tile_state_changed(DESTROYED)` aufgefüllt
 - Upgrade-Node-System: 3 Nodes pro Waffe als Enum, freigeschaltet wenn Material vorhanden
 - Aktive Waffe bestimmt: erlaubte Angriffs-Combos, Spell-Synergie-Bonus, Animations-Farbe
-- `R1` Langdruck → Waffen-Panel öffnen
+- `X halten (0.5s)` → Waffen-Panel öffnen
 
 **Akzeptanzkriterien:**
 - [ ] Alle 5 Archetypen wählbar

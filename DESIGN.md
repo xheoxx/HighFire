@@ -345,8 +345,8 @@ SNES-Layout als Referenz: Das Spiel muss mit nur 12 Inputs (D-Pad 4×, A/B/X/Y, 
 | **D-Pad** | Bewegung (8 Richtungen) + Motion-Input-Gesten (im Combo-Modus: nur Combo-Input) | `move_up`, `move_down`, `move_left`, `move_right` |
 | **B** | Angriff / Spell auslösen (Finish-Button) | `action_attack` |
 | **A** | Dodge / Ausweichen | `action_dodge` |
-| **Y** | Element wechseln (tippen) / Spellcrafting-Menü (halten 0.5s) | `action_element` |
-| **X** | Waffen-Spezial / Interaktion | `action_special` |
+| **Y** | Element-Modus wechseln (tippen) – reserviert für spätere Nutzung | `action_element` |
+| **X** | Waffen-Panel öffnen (halten 0.5s) / Waffen-Spezial (tippen) | `action_special` |
 | **L** | Siehe L/R-System unten | `combo_mode_l`, `target_prev` |
 | **R** | Siehe L/R-System unten | `combo_mode_r`, `target_next` |
 | **Start** | Pause-Menü | `menu_pause` |
@@ -450,62 +450,118 @@ Die konkreten Combo-Definitionen pro Modus werden in Phase 2 (Stream A – Motio
 ## Spellcrafting-System
 
 ### Design-Absicht
-Spells werden aus Elementen zusammengebaut wie Rezepte. Das Crafting fühlt sich wie ein Ritual an – nicht wie ein Shop.
+Spells werden in Echtzeit während des Kampfes durch Combo-Eingaben gewirkt – kein Panel, kein Inventar. Die Bewegung selbst ist die Magie. Das System ist in zwei Modi aufgeteilt: **Modus L** (generische Element-Grammatik, flexibel) und **Modus R** (feste Spell-Sequenzen, präzise). Magie ist Waffen überlegen – aber zeitlich limitiert. Wenn der Magie-Timeout abläuft, ist der Spieler auf seine Waffe angewiesen.
 
-### Elemente
+---
 
-| Element | Symbol | Primäreffekt | Sekundäreffekt |
-|---------|--------|-------------|----------------|
-| Feuer | 🔥 | Direktschaden | Brennen (DoT) |
-| Eis | ❄️ | Verlangsamung | Einfrieren bei Stack |
-| Blitz | ⚡ | Ketteneffekt | Betäubung |
-| Erde | 🪨 | Terrain-Zerstörung | Rüstungs-Debuff |
-| Schatten | 🌑 | Line-of-Sight-Blocker | Unsichtbarkeit (kurz) |
-| Licht | ✨ | Heilung (selbst/ally) | Blend-Effekt |
+### Elemente & D-Pad-Kodierung (Modus L)
 
-### Crafting-Rezepte (Kombinationen)
+In Modus L kodiert jede D-Pad-Richtung ein Element. Die Sequenz zweier Richtungen bestimmt den Spell.
 
-| Rezept | Effekt | Besonderheit |
-|--------|--------|--------------|
+| D-Pad | Element | Symbol |
+|-------|---------|--------|
+| ↑ | Feuer | 🔥 |
+| ↓ | Eis | ❄️ |
+| → | Blitz | ⚡ |
+| ← | Erde | 🪨 |
+| ↗ (diagonal) | Schatten | 🌑 |
+| ↙ (diagonal) | Licht | ✨ |
+
+### Element-Effekte
+
+| Element | Primäreffekt | Sekundäreffekt |
+|---------|-------------|----------------|
+| Feuer | Direktschaden | Brennen (DoT) |
+| Eis | Verlangsamung | Einfrieren bei Stack |
+| Blitz | Ketteneffekt | Betäubung |
+| Erde | Terrain-Zerstörung | Rüstungs-Debuff |
+| Schatten | Line-of-Sight-Blocker | Unsichtbarkeit (kurz) |
+| Licht | Heilung (selbst/ally) | Blend-Effekt |
+
+### Modus L – Generische Element-Grammatik
+
+**Eingabe:** `L halten + D-Pad-Sequenz (2 Eingaben, max. 0.4s) + B`
+
+Der Spieler kombiniert zwei Elemente frei. Die Reihenfolge der Eingabe ist egal – nur die Kombination zählt.
+
+| Kombination | Spell | Effekt |
+|-------------|-------|--------|
 | Feuer + Eis | Dampfwolke (AoE) | Blockiert Sicht |
+| Feuer + Blitz | Plasmabolt | Schnellstes Projektil |
 | Blitz + Erde | Seismischer Impuls | Zerstört Tiles im Radius |
-| Schatten + Licht | Spiegelklon | Täuschungs-Decoy |
-| Feuer + Blitz | Plasmabolt | Schnellster Projektil |
 | Eis + Erde | Frostwall | Terrain-Blockade |
+| Schatten + Licht | Spiegelklon | Täuschungs-Decoy |
 | Licht + Erde | Heilfeld | Permanenter HoT-Bereich |
 
-### Crafting-Flow
-1. Spieler sammelt Elemente durch Treffer landen oder Terrain-Interaktion
-2. Crafting-Panel öffnet sich mit `L1` (Kurzdruck = Spell-Slot wechseln, Langdruck = Crafting-UI)
-3. Zwei Elemente auswählen → Spell wird gebaut
-4. Spell belegt einen von **3 Spell-Slots** am HUD
+Unbekannte Kombinationen (nicht in der Tabelle) = kein Spell, Eingabe verfällt.
+
+### Modus R – Feste Spell-Sequenzen
+
+**Eingabe:** `R halten + D-Pad-Sequenz (vordefiniert) + B`
+
+Feste, benannte Angriffe mit klaren Eigenschaften. Schneller lernbar, einfacher balancierbar. Fokus auf Nahkampf und direkte Offensiv-Magie.
+
+| Sequenz | Spell | Charakter |
+|---------|-------|-----------|
+| ↓→ + B | Feuerball | Klassischer Projektil-Angriff, mittlerer Schaden |
+| ↓← + B | Eisschild | Defensiv, blockiert nächsten Treffer |
+| →↓→ + B | Blitzschlag (Z-Motion) | Hoher Schaden, kurze Reichweite |
+| ←→ + B | Erdstampf | AoE um Spieler, zerstört nahe Tiles |
+| ↑↓ + B | Schattensprung | Kurze Teleport-Dash in Blickrichtung |
+| ↑→ + B | Lichtstrahl | Langer Strahl, trifft durch Gegner |
+
+> **Hinweis**: Konkrete Spell-Werte (Schaden, Reichweite, Cooldown) werden in der Testphase festgelegt. ⚠ Balance-Check erforderlich.
+
+### Modus B – Lange Kombos (High Risk / High Reward)
+
+**Eingabe:** `L + R halten + D-Pad-Sequenz (3+ Eingaben, max. 0.6s) + B`
+
+Mächtigste Spells. Spieler steht still (Stillstand-Regel). Sequenzen werden in Phase 2 definiert – Grundregel: mindestens 3 D-Pad-Eingaben, Effekt kombiniert Elemente aus Modus L und R.
+
+> ⚠ Konkrete Modus-B-Sequenzen: offen bis Testphase.
+
+---
+
+### Magie-Timeout (Kern-Limiter)
+
+Magie ist Waffen überlegen – aber zeitlich begrenzt. Nach einer definierten Aktivzeit ist kein Modus L/R/B mehr verfügbar bis die Magie sich erholt hat.
+
+| Parameter | Startwert | Anpassbar |
+|-----------|-----------|-----------|
+| Magie-Aktivzeit (wie lange L/R nutzbar) | ⚠ offen | Ja |
+| Regenerationszeit (bis Magie wieder voll) | ⚠ offen | Ja |
+| Regenerations-Trigger | ⚠ offen (passiv / durch Waffen-Treffer / beides) | Ja |
+
+> ⚠ Alle Timeout-Werte und der Regenerations-Trigger werden in der Testphase ermittelt. Grundregel: Magie-Phasen und Waffen-Phasen sollen sich im Kampf natürlich abwechseln.
+
+**HUD-Darstellung:** Magie-Verfügbarkeit als schmaler Balken oder Glüh-Indikator an den Spieler-Farben (kein separater Mana-Balken – visuell in die Spieler-Silhouette integriert).
 
 ---
 
 ## Weaponcrafting-System
 
 ### Design-Absicht
-Waffen sind die physische Erweiterung der Spells. Eine Waffe ohne passenden Spell ist schwächer; zusammen entstehen Synergien.
+Waffen sind der verlässliche Fallback wenn die Magie im Timeout ist. Sie sind nie so mächtig wie Magie – aber immer verfügbar. Weaponcrafting passiert **zwischen Runden oder in ruhigen Kampfmomenten** über ein Panel, das mit `X halten (0.5s)` geöffnet wird. Materialien werden durch Terrain-Zerstörung gesammelt.
 
 ### Waffen-Archetypen
 
-| Typ | Reichweite | Tempo | Spell-Synergie |
-|-----|-----------|-------|----------------|
-| **Klinge** | Nah | Schnell | Feuer, Blitz |
-| **Stab** | Mittel | Mittel | Alle Spells |
-| **Kanone** | Fern | Langsam | Eis, Erde |
-| **Klaue** | Nah | Sehr schnell | Schatten |
-| **Schild-Arm** | Nah | Sehr langsam | Licht, Eis |
+| Typ | Reichweite | Tempo | Stärke ohne Magie | Spell-Synergie |
+|-----|-----------|-------|-------------------|----------------|
+| **Klinge** | Nah | Schnell | Gut | Feuer, Blitz |
+| **Stab** | Mittel | Mittel | Mittel | Alle Spells |
+| **Kanone** | Fern | Langsam | Mittel | Eis, Erde |
+| **Klaue** | Nah | Sehr schnell | Gut | Schatten |
+| **Schild-Arm** | Nah | Sehr langsam | Defensiv | Licht, Eis |
 
 ### Upgrade-Nodes
 Jede Waffe hat **3 Upgrade-Nodes**, die mit gesammelten Materialien (aus Terrain-Zerstörung) freigeschaltet werden:
 - **Node 1**: Basis-Stat (Schaden oder Reichweite)
-- **Node 2**: Spell-Synergie-Bonus
+- **Node 2**: Spell-Synergie-Bonus (wirkt nur wenn Magie aktiv)
 - **Node 3**: Sonder-Effekt (z. B. Kettenangriff, Durchdringung)
 
 ### Crafting-Flow
 1. Materialien aus zerstörten Tiles sammeln (automatisch aufgehoben)
-2. Weapon-Crafting via `R1` (Langdruck) öffnet das Waffen-Panel
+2. `X halten (0.5s)` → Waffen-Panel öffnet sich
 3. Waffentyp wählen → verfügbare Upgrade-Nodes sichtbar
 4. Node bestätigen → Waffe ändert Form und Glüh-Farbe
 
