@@ -82,6 +82,24 @@ Design-Ergänzungen und -Korrekturen die nach Abschluss von Phase 0 entstehen. L
 
 ---
 
+#### Iteration 3 – Statuseffekt-System ✅ ABGESCHLOSSEN
+**Geänderte Dokumente**: `DESIGN.md`, `PLAN_PHASES.md`
+
+**Inhalt:**
+- Vollständiges Statuseffekt-System dokumentiert: 8 Effekte (Brennen, Verlangsamung, Einfrieren, Betäubung, Rüstungs-Debuff, Blind, HoT, Nass)
+- Stapel-Mechanik: geometrisch abnehmend (`Basiswert × Stapel-Faktor^(n-1)`), Stapel-Faktor und Max-Stacks pro Effekt konfigurierbar via `status_effects.tres`
+- 4 Element-Synergien/Reaktionen: Dampfstoß, Leitfähigkeit, Schmelze, Panik (⚠ EXPERIMENTELL)
+- Anti-Frustrations-Regeln: Immunität nach CC, Dodge bricht Soft-CC, Max-Debuff-Cap (3 Typen)
+- HUD: Icons über Charakter (ColorRect + Label + Timer-Balken), farb-kodiert nach Element
+- Technische Architektur: `status_effect_component.gd` als Child-Node, `reaction_checker.gd`, `status_effect_hud.gd`
+
+**Auswirkungen auf Implementierung:**
+- Phase 1 Stream F: `status_effects.tres` in Resource-Dateiliste aufgenommen
+- Phase 2 Stream B: 9 Dateien statt 5 (Statuseffekt-Komponenten neu), Akzeptanzkriterien erweitert, Fallstricke ergänzt
+- Phase 2 Stream D: `damage_system.gd` muss Rüstungs-Debuff-Multiplikator aus `status_effect_component` abfragen
+
+---
+
 ### Phase 1 – Core Scene & Movement
 **Ziel**: Spielbares Grundgerüst mit Bewegung, Dodge, Target-Lock und zerstörbarem Terrain in einer Arena. Am Ende dieser Phase können 2 Spieler sich bewegen, ausweichen und Ziele wechseln.
 
@@ -285,6 +303,7 @@ project.godot:
 /resources/spell_values.tres        ← Schaden, Reichweite, Cooldown pro Spell
 /resources/combo_definitions.tres   ← D-Pad-Sequenz → Spell-Mapping (Modus R)
 /resources/weapon_definitions.tres  ← Archetypen, Stats, Upgrade-Nodes
+/resources/status_effects.tres      ← Alle Effekt-Definitionen, Stapel-Parameter, Icon-Farben
 /resources/bot_config.tres          ← KI-Schwierigkeitsstufen-Parameter
 /resources/arena_config.tres        ← Spawn-Positionen, Tile-Config pro Arena
 ```
@@ -381,11 +400,15 @@ const COMBOS = {
 
 **Zu erstellende Dateien:**
 ```
-/scripts/spell_system.gd          ← Spell-Verwaltung & Casting (liest spell_definitions/spell_values)
-/scripts/spell_projectile.gd      ← Projektil-Bewegung & Kollision
-/scenes/spell_projectile.tscn     ← Projektil-Node
-/scenes/magic_gauge_ui.tscn       ← Magie-Verfügbarkeits-Anzeige (Glüh-Indikator, kein Mana-Balken)
-/scripts/magic_gauge_ui.gd        ← Gauge-Logik (reagiert auf Signal magic_changed)
+/scripts/spell_system.gd             ← Spell-Verwaltung & Casting (liest spell_definitions/spell_values)
+/scripts/spell_projectile.gd         ← Projektil-Bewegung & Kollision
+/scenes/spell_projectile.tscn        ← Projektil-Node
+/scenes/magic_gauge_ui.tscn          ← Magie-Verfügbarkeits-Anzeige (Glüh-Indikator, kein Mana-Balken)
+/scripts/magic_gauge_ui.gd           ← Gauge-Logik (reagiert auf Signal magic_changed)
+/scripts/status_effect_component.gd  ← Component auf jedem Spieler (Stacks, Timer, Reaktionen)
+/scripts/reaction_checker.gd         ← Prüft Reaktions-Tabelle bei jedem add_effect()-Aufruf
+/scenes/status_effect_hud.tscn       ← Icon-Visualisierung über Charakter (ColorRect + Label + Timer-Balken)
+/scripts/status_effect_hud.gd        ← HUD-Update-Logik (reagiert auf effect_changed-Signal)
 ```
 
 **Zu implementierende Logik:**
@@ -400,15 +423,28 @@ const COMBOS = {
 - `spell_projectile.gd`: Bewegung via `velocity`, Kollision mit Spielern (Physics-Layer Spieler) und Terrain prüfen
 - Spell-Effekte via Hook: `spell_system` ruft `hook_registry.run_hook("spell_effect_hook", ...)` vor Schadensanwendung
 - Spell-Effekt-Dispatcher: Dictionary `{spell_name: Callable}` für saubere lokale Erweiterbarkeit (Fallback wenn kein Mod-Hook)
+- Statuseffekte werden nicht direkt im Spell-Script angewendet — `spell_system` ruft `status_effect_component.add_effect(effect_id, source)` auf dem Ziel auf
 
-**Spell-Effekte (lt. DESIGN.md):**
-- Brennen (DoT): `Timer`-Node auf Ziel, tickt alle 0.5s – kein `_process()`-Loop
-- Verlangsamung: Speed-Multiplikator auf `player.gd` als Property, endet nach Timer
-- Einfrieren: wenn Eis-Stack ≥ 2 → `CharacterBody2D.set_physics_process(false)` für kurze Dauer
-- Betäubung (Blitz): Input-Block-Flag auf `player_input.gd`
-- Terrain-Zerstörung (Erde): `arena_grid.gd`-Signal `force_destroy_tile(position)` senden
-- Heilung (Licht): `health_component.heal(amount)` aufrufen
-- LOS-Blocker (Schatten): Partikel-Cloud-Node instanziieren, beeinflusst Raycast-Layer
+**Statuseffekt-Komponente (lt. DESIGN.md Statuseffekt-System):**
+- `status_effect_component.gd`: `add_effect(id, source)`, `remove_effect(id)`, eigener `_process(delta)` für Tick-Logik
+- Stapel-Mechanik: geometrisch abnehmend (`Stack-Wert = Basiswert × Stapel-Faktor^(n-1)`), Stapel-Faktor aus `status_effects.tres`
+- Jeder Stack hat eigenen Timer — kein Refresh, älteste Stacks laufen zuerst ab
+- `reaction_checker.gd`: wird bei jedem `add_effect()` synchron aufgerufen, prüft alle 4 Reaktionen aus DESIGN.md
+- Reaktion konsumiert beteiligte Stacks und triggert Einmal-Effekt (Knockback, Kettenblitz, Burst-Schaden, Panik ⚠ EXPERIMENTELL)
+- Immunitäts-Flags: nach Einfrieren 3.0s Immunität, nach Betäubung 1.5s Immunität — als Timer auf `status_effect_component`
+- Dodge bricht alle Soft-CC-Stacks (Signal `dodged` von `player.gd` → `status_effect_component.clear_soft_cc()`)
+- Max-Debuff-Cap: maximal 3 verschiedene Effekt-Typen gleichzeitig — ältester Effekt-Typ wird bei Überschreitung entfernt
+- Signal `effect_changed(effect_id, stack_count)` → `status_effect_hud.gd`
+
+**Spell-Effekte → Statuseffekte (lt. DESIGN.md Statuseffekt-System):**
+- Brennen: `status_effect_component.add_effect("burning", source)` — tickt via eigenem Timer alle 0.5s
+- Verlangsamung: `add_effect("slow", source)` — Speed-Multiplikator auf `player.gd`
+- Einfrieren: wird automatisch durch `status_effect_component` ausgelöst wenn Verlangsamungs-Schwelle erreicht
+- Betäubung: `add_effect("stun", source)` — Input-Block-Flag auf `player_input.gd`
+- Rüstungs-Debuff: `add_effect("armor_break", source)` — Multiplikator in `damage_system.gd` abgefragt
+- Blind: `add_effect("blind", source)` — Flag `is_blinded` auf `target_system.gd`
+- HoT (Heilung): `add_effect("hot", source)` — tickt `health_component.heal(amount)` alle 1.0s
+- Nass: `add_effect("wet", source)` — kein direkter Effekt, nur Reaktions-Primer
 
 **Akzeptanzkriterien:**
 - [ ] Alle 6 Modus-L-Kombinationen aus `DESIGN.md` werden korrekt erkannt und gewirkt
@@ -416,15 +452,22 @@ const COMBOS = {
 - [ ] Magie-Timeout sperrt Modus L/R/B nach Ablauf und zeigt Gauge korrekt an
 - [ ] Magie regeneriert sich nach konfiguriertem Trigger
 - [ ] Projektile treffen Spieler und Terrain mit korrekten Kollisions-Layern
-- [ ] Alle 7 Spell-Effekte (DoT, Slow, Freeze, Stun, Terrain, Heal, LOS) werden korrekt angewendet
+- [ ] Alle 8 Statuseffekte (Brennen, Verlangsamung, Einfrieren, Betäubung, Rüstungs-Debuff, Blind, HoT, Nass) werden korrekt angewendet
+- [ ] Stapel-Mechanik: geometrische Abschwächung funktioniert, Stapel-Faktor aus `status_effects.tres` gelesen
+- [ ] Alle 4 Reaktionen aus `DESIGN.md` werden bei korrekten Effekt-Kombinationen ausgelöst
+- [ ] Immunitäts-Regeln verhindern CC-Dauerloop (Einfrieren 3.0s, Betäubung 1.5s Immunität)
+- [ ] Dodge bricht Soft-CC-Stacks
+- [ ] Max-Debuff-Cap (3 Effekt-Typen) wird eingehalten
+- [ ] Status-Icons erscheinen korrekt über dem betroffenen Charakter mit Stack-Zahl und Timer-Balken
 - [ ] Kein Spell wird gewirkt wenn Magie-Timeout aktiv (Eingabe verfällt lautlos)
-- [ ] Werte aus `spell_values.tres` werden geladen – kein Wert ist im Code hardcodiert
+- [ ] Werte aus `spell_values.tres` und `status_effects.tres` werden geladen – kein Wert ist im Code hardcodiert
 
 **Fallstricke:**
 - Projektil-Instanziierung: `preload()` statt `load()` für Performance (Szene bei Spielstart vorladen)
 - `spell_definitions.tres`-Lookup: Kombinations-Reihenfolge ignorieren (Feuer+Blitz = Blitz+Feuer) → Set statt Array als Key
 - Magie-Gauge: `Tween` für smooth Leerung/Füllung, kein abrupter Sprung
-- Modus B sperrt Bewegung: `player_input.gd` muss Flag `combo_mode_b_active` prüfen
+- Einfrieren via `set_physics_process(false)` — darauf achten dass Status-Icon-HUD weiterläuft (eigener `_process` auf `status_effect_hud`)
+- Reaktions-Cooldown in `reaction_checker.gd` als Dictionary `{reaction_id: timestamp}` führen
 
 ---
 
@@ -474,6 +517,7 @@ const COMBOS = {
 - `damage_system.gd`: einziger Einstiegspunkt für Schadensbewerbung, prüft LOS vor Anwendung
 - LOS-Prüfung: Raycast Angreifer → Ziel, wenn Terrain dazwischen → Schaden reduziert oder geblockt
 - Schadensklassen aus `DESIGN.md`: Leicht (8–12), Mittel (18–25), Schwer (35–50)
+- **Rüstungs-Debuff-Integration**: vor Schadensanwendung `status_effect_component.get_armor_multiplier()` auf dem Ziel abfragen und Schaden entsprechend skalieren
 - Element-Drop bei Treffer: Signal `element_dropped(element_type)` → `spell_system.gd`
 
 **Akzeptanzkriterien:**
@@ -482,10 +526,12 @@ const COMBOS = {
 - [ ] `died()`-Signal wird korrekt emittiert
 - [ ] Element-Drop funktioniert nach Treffer
 - [ ] Alle 3 Schadensklassen produzieren korrekte Werte
+- [ ] Rüstungs-Debuff erhöht eingehenden Schaden korrekt (geometrische Stapel-Skalierung)
 
 **Fallstricke:**
 - LOS-Raycast auf separatem Physics-Layer (Terrain-Layer), damit Spieler-Nodes nicht blockieren
 - `health_component` als AutoLoad oder als Child-Node – Child-Node bevorzugen für Multiplayer-Kompatibilität
+- Rüstungs-Debuff-Abfrage defensiv schreiben: wenn `status_effect_component` nicht vorhanden (z.B. Tutorial-Dummy) → Multiplikator = 1.0
 
 ---
 

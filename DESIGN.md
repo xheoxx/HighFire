@@ -542,6 +542,187 @@ Magie ist Waffen überlegen – aber zeitlich begrenzt. Nach einer definierten A
 
 ---
 
+## Statuseffekt-System
+
+> **Resource-Datei:** `res://resources/status_effects.tres` — alle Effekt-Definitionen, Basiswerte und Stapel-Parameter. Kein Wert hardcoded.
+
+### Design-Absicht
+
+Statuseffekte sind die taktische Schicht zwischen Rohschaden und Instant-Kill. Sie belohnen Element-Wissen, schaffen Lese-Anforderungen im Kampf und geben jedem Spell eine eigene Identität. Das System muss lesbar bleiben — ein Spieler soll auf einen Blick erkennen, was sein Gegner gerade erleidet.
+
+---
+
+### Stapel-Mechanik
+
+Jeder Effekt kann sich bis zu einem konfigurierbaren Maximum stapeln. Jeder neue Stack auf demselben Ziel fügt eine neue Instanz hinzu, aber mit geometrisch abnehmendem Beitrag:
+
+```
+Stack-Wert(n) = Basiswert × Stapel-Faktor^(n-1)
+```
+
+**Stapel-Faktor** ist pro Effekt konfigurierbar (Standard: `0.5`). Beispiel mit Basiswert `1.0` und Faktor `0.5`:
+
+| Stack | Multiplikator | Kumulierter Effekt |
+|-------|--------------|-------------------|
+| 1 | 1.0 × | 1.0 |
+| 2 | 0.5 × | 1.5 |
+| 3 | 0.25 × | 1.75 |
+| 4 | 0.125 × | 1.875 |
+
+Das Gesetz der abnehmenden Erträge verhindert, dass ein einziges Element einen Gegner durch pures Spammen sofort eliminiert. Der Startfaktor (z.B. `0.75` statt `0.5`) und das Maximum sind über `status_effects.tres` anpassbar und können durch Waffen-Upgrade-Nodes oder Mod-Skills modifiziert werden.
+
+**Regeln:**
+- Jeder Stack hat einen **eigenen, unabhängigen Timer** — ältere Stacks laufen zuerst ab
+- Kein Refresh: ein neuer Stack verlängert nicht die Laufzeit bestehender Stacks
+- **Max-Stack-Cap** pro Effekt in `status_effects.tres` definiert (Standard: 4)
+- Der aktuell stärkste Stack (Stack 1) bestimmt den visuellen Intensitätsgrad des Effekts am Charakter
+
+---
+
+### Statuseffekte im Detail
+
+#### BRENNEN *(Feuer)*
+- **Typ**: DoT (Schaden über Zeit)
+- **Basisschaden pro Tick**: `⚠ offen — Balance-Check` (aus `status_effects.tres`)
+- **Tick-Intervall**: 0.5s
+- **Dauer pro Stack**: 3.0s
+- **Stapel-Faktor**: 0.5 (Standard)
+- **Max-Stacks**: 4
+- **Visuell**: Orange-rote Partikel (`GPUParticles2D`) über dem Spieler, Intensität steigt mit Stack-Zahl; Rim-Glow pulsiert in `#FF4400`
+- **Synergie**: Eis löscht alle Brennen-Stacks sofort (→ „Dampfstoß"-Reaktion, see Reaktions-Tabelle)
+
+#### VERLANGSAMUNG *(Eis)*
+- **Typ**: Debuff (Movement-Speed-Multiplikator)
+- **Multiplikator pro Stack**: `1.0 × Stapel-Faktor^(n-1)` auf den Speed-Malus; Stack 1 = 30% langsamer, Stack 2 = +15%, Stack 3 = +7.5% usw.
+- **Dauer pro Stack**: 2.5s
+- **Stapel-Faktor**: 0.5
+- **Max-Stacks**: 3 — bei Stack 3 und vollem Bonus → EINFRIEREN ausgelöst (siehe unten)
+- **Visuell**: Blauweißes Frost-Overlay auf dem Charakter (`ColorRect` mit Transparenz), Bewegungs-Partikel werden träge
+- **Synergie**: Blitz auf einem verlangsamten Ziel → NASS+BLITZ-Reaktion (verstärkte Betäubung)
+
+#### EINFRIEREN *(Eis, Stack-Schwelle)*
+- **Typ**: Hard-CC (vollständige Bewegungs- und Input-Sperre)
+- **Auslösung**: Wenn Verlangsamungs-Stack-Bonus einen Schwellwert überschreitet (`⚠ offen — in Testphase mit Stack-Cap abstimmen`)
+- **Dauer**: 1.5s (nicht stapelbar, wird immer refreshed)
+- **Stapel**: Nicht stapelbar — einmalig ausgelöst, dann Immunität für 3.0s (Cooldown verhindert Freeze-Lock)
+- **Visuell**: Charakter wird hellblau eingefärbt (`ColorRect` Overlay, Opacity 60%), GPUParticles2D frieren ein, keine Bewegungsanimation
+- **Technisch**: `CharacterBody2D.set_physics_process(false)` + Input-Block-Flag auf `player_input.gd`
+
+#### BETÄUBUNG *(Blitz)*
+- **Typ**: Soft-CC (Input-Sperre, Bewegung bleibt aktiv mit Trägheit)
+- **Dauer pro Stack**: 0.6s
+- **Stapel-Faktor**: 0.5
+- **Max-Stacks**: 2 (kurze Betäubungen stapeln sich kaum sinnvoll)
+- **Visuell**: Gelbe Blitz-Partikel um den Kopf des Charakters, Screen-Noise-Flash (`ColorRect` kurz gelb, Opacity 20%)
+- **Technisch**: Input-Block-Flag auf `player_input.gd` — Physik läuft weiter (Spieler gleitet aus)
+- **Synergie**: Betäubung auf einem NASSEN Ziel wird in der Dauer verdoppelt (Reaktions-Tabelle)
+
+#### RÜSTUNGS-DEBUFF *(Erde)*
+- **Typ**: Multiplikativer Schadens-Verstärker auf eingehenden Schaden
+- **Multiplikator pro Stack**: Stack 1 = eingehender Schaden ×1.25, Stack 2 = ×1.125, Stack 3 = ×1.0625 (geometrisch)
+- **Dauer pro Stack**: 5.0s (lange Dauer — Erde ist der Setup-Effekt)
+- **Stapel-Faktor**: 0.5
+- **Max-Stacks**: 3
+- **Visuell**: Braun-graue Risse im Charakter-Sprite (`Line2D`-Overlay), Partikel fallen wie Staub herab
+- **Technisch**: `damage_system.gd` multipliziert Schaden wenn Ziel Rüstungs-Debuff trägt
+
+#### BLIND *(Schatten)*
+- **Typ**: Sicht-Einschränkung + LOS-Manipulation
+- **Effekt**: Das Ziel verliert die Fähigkeit, Gegner via Target-Lock zu locken. Bestehender Lock bleibt, aber LOS-Raycast des Ziels wird blockiert (Gegner erscheinen als außerhalb der Sicht)
+- **Dauer pro Stack**: 2.0s
+- **Stapel-Faktor**: 0.5
+- **Max-Stacks**: 2
+- **Visuell**: Schwarzer Partikel-Nebel über dem Charakter; für den betroffenen Spieler: leichte Vignetten-Verdunkelung am Bildschirmrand (nur auf dessen SubViewport)
+- **Technisch**: Flag `is_blinded` auf `target_system.gd` — blockiert neue Lock-Anfragen und setzt LOS-Raycast-Maske auf 0
+
+#### NASS *(Kombinations-Vorbereitung, kein eigener Spell)*
+- **Typ**: Reaktions-Primer (kein direkter Schadenseffekt)
+- **Auslösung**: Dampfwolke (Feuer+Eis), Frostwall-Treffer, bestimmte Arena-Effekte
+- **Dauer**: 4.0s (nicht stapelbar)
+- **Visuell**: Charakter glänzt leicht (Shine-Overlay), kleine Wassertropfen-Partikel
+- **Allein**: Kein Effekt auf Kampfwerte — reiner Reaktions-Enabler
+- **Synergie**: Wird durch Blitz-Treffer zu NASS+BLITZ-Reaktion konsumiert
+
+#### HEILUNG ÜBER ZEIT *(Licht, HoT)*
+- **Typ**: Regen (HP-Regeneration über Zeit)
+- **Heilung pro Tick**: `⚠ offen — Balance-Check`
+- **Tick-Intervall**: 1.0s
+- **Dauer pro Stack**: 4.0s
+- **Stapel-Faktor**: 0.5
+- **Max-Stacks**: 2
+- **Visuell**: Goldene aufsteigende Partikel, Rim-Glow pulsiert in Spielerfarbe (heller)
+- **Besonderheit**: Kann auf Verbündete angewendet werden (einziger supportive Effekt im Spiel)
+
+---
+
+### Reaktions-Tabelle (Synergien)
+
+Wenn zwei kompatible Effekte auf demselben Ziel zusammentreffen, wird eine **Reaktion** ausgelöst. Die Reaktion konsumiert alle beteiligten Stacks und erzeugt einen einmaligen, stärkeren Effekt.
+
+| Effekt A | Effekt B | Reaktion | Effekt |
+|----------|----------|----------|--------|
+| BRENNEN | VERLANGSAMUNG/EINFRIEREN | **Dampfstoß** | Alle Eis/Feuer-Stacks werden konsumiert; AoE-Druckwelle schleudert Ziel weg (Knockback ~200px), kein weiterer Schaden |
+| NASS | BETÄUBUNG (Blitz) | **Leitfähigkeit** | Betäubungs-Dauer wird verdoppelt; Blitz-Ketteneffekt springt auf alle Spieler in 150px Radius (jeweils halbe Betäubung) |
+| RÜSTUNGS-DEBUFF | BRENNEN | **Schmelze** | Rüstungs-Debuff-Multiplikator wird für 1 Tick auf ×2.0 erhöht; DoT-Tick löst sofort einen Burst-Schaden aus |
+| BLIND | RÜSTUNGS-DEBUFF | **Panik** | Ziel verliert für 2s die Kontrolle über die Bewegungsrichtung (zufällige Drift-Vektoren) — ⚠ EXPERIMENTELL, nach Testphase evaluieren |
+
+> Reaktionen können durch Mod-Skripte (`spell_effect_hook`) erweitert werden — neue Reaktionstypen ohne Core-Code-Änderung.
+
+---
+
+### Immunität & Anti-Frustrations-Regeln
+
+Damit kein Spieler durch reine CC-Ketten aus dem Kampf ausgesperrt wird:
+
+| Regel | Detail |
+|-------|--------|
+| **Einfrieren-Immunität** | Nach Ende eines Einfrierens: 3.0s Immunität gegen erneutes Einfrieren |
+| **Betäubungs-Immunität** | Nach Ende einer Betäubung: 1.5s Immunität gegen erneute Betäubung |
+| **Dodge bricht CC** | Ein erfolgreicher Dodge entfernt alle aktiven Soft-CC-Stacks (Verlangsamung, Betäubung, Blind) — Hard-CC (Einfrieren) wird nicht gebrochen |
+| **Reaktions-Cooldown** | Dieselbe Reaktionsart kann auf dem selben Ziel nicht zweimal in 3.0s ausgelöst werden |
+| **Max-Debuff-Cap** | Ein Ziel kann gleichzeitig maximal 3 verschiedene Effekt-**Typen** tragen (Stacks innerhalb eines Typs nicht mitgezählt) |
+
+---
+
+### HUD-Darstellung
+
+Icons schweben **über dem Charakter-Sprite** in der Welt (kein HUD-Panel). Damit sind Effekte räumlich direkt dem Ziel zugeordnet.
+
+```
+Aufbau (pro Effekt-Slot):
+  [Icon-ColorRect, 16×16px]
+    └── Label: Stack-Zahl (wenn > 1)
+    └── Unter-Icon: kleiner Timer-Balken (schwindet über die Dauer des ältesten Stacks)
+```
+
+- Icons sind einfache `ColorRect`-Formen + `Label` (keine externen Sprites nötig)
+- Farb-Kodierung nach Element: Feuer=#FF4400, Eis=#44AAFF, Blitz=#FFE000, Erde=#8B5E3C, Schatten=#6622AA, Licht=#FFD700, Nass=#0088FF
+- Maximal 5 Icon-Slots sichtbar (bei mehr Effekten: „+N"-Label)
+- Immunität: Icon wird grau und durchgestrichen für die Immunitäts-Dauer angezeigt
+- Icons verblassen (Alpha-Tween) in den letzten 0.5s bevor der Stack abläuft
+
+---
+
+### Technische Architektur
+
+```
+status_effect_component.gd      ← Component auf jedem Spieler-Node
+    ├── add_effect(effect_id, source_player)
+    ├── remove_effect(effect_id)
+    ├── _process(delta)          ← tickt alle aktiven Timer, prüft Reaktionen
+    └── Signal: effect_changed(effect_id, stack_count)  → status_effect_hud.gd
+
+status_effect_hud.gd            ← Icon-Visualisierung über dem Spieler
+reaction_checker.gd             ← Prüft bei jedem add_effect() auf Reaktionen
+```
+
+- `status_effect_component` ist ein `Node`-Child auf `player.tscn` (kein AutoLoad)
+- Alle Effekt-Definitionen (Dauer, Stapel-Faktor, Max-Stacks, Icon-Farbe) aus `status_effects.tres`
+- `reaction_checker.gd` läuft synchron in `add_effect()` — keine asynchrone Reaktionsverzögerung
+- Mod-Hook `on_player_hit` kann Effekte vor Anwendung modifizieren (Stapel-Faktor überschreiben, Effekt-Typ tauschen)
+
+---
+
 ## Weaponcrafting-System
 
 > **Resource-Datei:** `res://resources/weapon_definitions.tres` — Archetypen, Stats und Upgrade-Nodes. Nie als Dictionary im Code hardcoden.
