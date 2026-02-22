@@ -67,9 +67,11 @@ Eine ritualhafte, industriell-fantastische Arena erschaffen, die kraftvoll und b
 
 ### Charaktere
 
-* Charaktere werden hauptsächlich als Silhouetten dargestellt
-* Nur Hände, Waffen und aktive Spell-Komponenten leuchten
-* Waffen sind Hybridformen (Stab + Klinge), aus einfacher Geometrie aufgebaut
+* Charaktere werden als **Pixelart-Sprites** dargestellt (48×48 px, 4 Richtungen, Spritesheets vom Auftraggeber geliefert)
+* Bis Sprites vorliegen: Platzhalter als `ColorRect`-Silhouette – Sprite-Integration ist von Anfang an vorbereitet
+* Spielerfarbe wird via `AnimatedSprite2D.modulate` aufgemalt – Sprites selbst sind farbneutral
+* Nur Hände, Waffen und aktive Spell-Komponenten leuchten (Rim-Glow bleibt als `Line2D`-Overlay prozedural)
+* Waffen sind Hybridformen (Stab + Klinge) – als Sprite oder als `ColorRect`-Geometrie
 
 ### Nebel und Tiefe
 
@@ -968,6 +970,95 @@ Items sind entweder **passiv** (wirken dauerhaft solange im Besitz) oder **bedin
 Das Item-System wird in **Phase 2 Stream B** (Spellcrafting) als zusätzliche Komponente implementiert, da es dieselbe Infrastruktur nutzt (`status_effect_component`, `damage_system`, Spieler-Signale). Der Drop-Trigger in `tile.gd` wird in Phase 2 nachgetragen (Stream B koordiniert mit Phase 1 Stream D).
 
 > **Slot-Limit-Entscheidung nach Testphase**: Falls in der Testphase Übersichtlichkeit ein Problem wird, wird ein konfigurierbares Maximum (z.B. 4 Items) in `item_config.tres` eingeführt. Die HUD-Darstellung unterstützt das bereits durch die `HBoxContainer`-Struktur.
+
+---
+
+## Charakter-Sprites & Asset-Integration
+
+### Designprinzip
+Das Spiel ist **2D Top-Down Pixelart** mit prozeduralen Primitiven für Arena und Effekte. Charaktere und Waffen werden als **Pixelart-Spritesheets** dargestellt sobald die Assets vorliegen. Bis dahin laufen Platzhalter (`ColorRect`) – der Agent baut die Sprite-Integration von Anfang an vor, sodass Assets jederzeit eintauschbar sind.
+
+> **Lieferpflicht extern**: Charakter-Sprites und Waffen-Sprites werden vom Auftraggeber geliefert. Der Agent wartet nicht darauf – Platzhalter bleiben aktiv bis Assets vorhanden sind.
+
+---
+
+### Spritesheet-Spezifikation – Charaktere
+
+| Eigenschaft | Wert |
+|-------------|------|
+| Tile-Größe | 48×48 px (kann angepasst werden) |
+| Richtungen | 4 (Oben, Unten, Links, Rechts) – kein Diagonalset nötig, Godot interpoliert |
+| Format | PNG, transparenter Hintergrund |
+| Farbgebung | Neutral (Graustufen oder einheitliche Basisfarbe) – Spielerfarbe wird per `modulate` in Godot aufgemalt |
+
+#### Benötigte Animationen pro Charakter
+
+| Animation | Frames | Loop | Hinweis |
+|-----------|--------|------|---------|
+| `idle` | 4 | Ja | Leichtes Atmen / Pulsieren |
+| `walk` | 6 | Ja | Alle 4 Richtungen |
+| `dodge` | 4 | Nein | Richtungsunabhängig, schnell |
+| `attack_light` | 3 | Nein | Leichter Angriff |
+| `attack_heavy` | 5 | Nein | Schwerer Angriff / Combo-Finale |
+| `cast` | 4 | Nein | Spell-Cast-Pose |
+| `hit` | 2 | Nein | Treffer-Reaktion |
+| `death` | 6 | Nein | Endet auf letztem Frame eingefroren |
+
+**Gesamt pro Charakter**: ~34 Frames × 4 Richtungen = ~136 Frames pro Charakter-Sprite  
+**Anzahl Charaktere**: 1 Basis-Charakter reicht für v1.0 (Spielerfarbe via `modulate` differenziert)
+
+---
+
+### Spritesheet-Spezifikation – Waffen
+
+| Eigenschaft | Wert |
+|-------------|------|
+| Tile-Größe | 32×32 px |
+| Format | PNG, transparenter Hintergrund |
+| Animationen | `idle` (2 Frames), `attack` (4 Frames) |
+| Anzahl | 5 Archetypen (Stab, Klinge, Bogen, Hammer, Dual) |
+
+> Waffen-Sprites sind optional für v1.0 – der Agent baut Waffen-Darstellung als `ColorRect`-Geometrie vor. Sprites können nachträglich eingetauscht werden.
+
+---
+
+### Technische Integration (Agent-Aufgabe)
+
+```
+/scenes/player.tscn         → AnimatedSprite2D-Node als Child von CharacterBody2D
+/scripts/player_animator.gd → Steuert AnimatedSprite2D (Animation-State-Machine)
+/resources/sprite_config.tres → Pfade zu Spritesheets, Tile-Größen, Frame-Counts
+```
+
+**Sprite-Modus-Toggle in `sprite_config.tres`:**
+- `use_sprites = false` → Platzhalter-`ColorRect` aktiv, `AnimatedSprite2D` unsichtbar
+- `use_sprites = true` → `AnimatedSprite2D` aktiv, `ColorRect` unsichtbar
+- Umschalten ohne Code-Änderung – nur Resource-Wert ändern
+
+**Spielerfarbe via `modulate`:**
+- Sprites werden in Neutral-Palette geliefert
+- `AnimatedSprite2D.modulate` wird auf Spieler-Primärfarbe gesetzt (aus `DESIGN.md` Farbpalette)
+- Rim-Glow bleibt als `Line2D`-Overlay erhalten (prozedural, unabhängig vom Sprite)
+
+**`player_animator.gd` reagiert auf Signale:**
+- `player.gd` emittiert `animation_changed(anim_name, direction)` bei jedem State-Wechsel
+- `player_animator.gd` setzt `AnimatedSprite2D.play(anim_name)` und `flip_h` für Links/Rechts
+
+---
+
+### Asset-Übersicht: Was kommt woher?
+
+| Asset | Verantwortlich | Format | Wann benötigt |
+|-------|---------------|--------|---------------|
+| Alle `.gd`-Scripts | Agent | GDScript | Fortlaufend |
+| Alle `.tscn`-Szenen | Agent | Godot TSCN | Fortlaufend |
+| Alle `.tres`-Resources | Agent | Godot Resource | Fortlaufend |
+| SFX (Treffer, Dodge, Combo) | Agent | Prozedural via Code | Phase 4B |
+| Arena-Grafik (Boden, Wände, Runen) | Agent | Primitive (ColorRect, Line2D) | Phase 1A |
+| VFX (Partikel, Trails, Shockwave) | Agent | GPUParticles2D, Line2D | Phase 4C |
+| **Charakter-Spritesheets** | **Auftraggeber** | **PNG** | **Phase 4H** (neuer Stream) |
+| **Waffen-Sprites** (optional v1.0) | **Auftraggeber** | **PNG** | **Phase 4H oder später** |
+| **Musik (6 OGG-Tracks)** | **Auftraggeber** | **OGG (geloopt)** | **Phase 4F** |
 
 ---
 

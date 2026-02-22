@@ -118,6 +118,25 @@ Design-Ergänzungen und -Korrekturen die nach Abschluss von Phase 0 entstehen. L
 
 ---
 
+#### Iteration 5 – Pixelart-Sprites & Asset-Integration ✅ ABGESCHLOSSEN
+**Geänderte Dokumente**: `DESIGN.md`, `PLAN_PHASES.md`
+
+**Inhalt:**
+- Grafikstil konkretisiert: 2D Top-Down Pixelart für Charaktere, Primitive bleiben für Arena + Effekte
+- Charakter-Spritesheets (48×48 px, 4 Richtungen, 8 Animationen, ~136 Frames) vom Auftraggeber geliefert
+- Spielerfarbe via `AnimatedSprite2D.modulate` – Sprites sind farbneutral
+- Sprite-Modus-Toggle in `sprite_config.tres`: `use_sprites = false/true` – kein Code-Wechsel nötig
+- Moodboard-01-Charakter-Abschnitt aktualisiert (Silhouette → Pixelart-Sprite)
+- Vollständige Asset-Übersicht dokumentiert (Agent vs. Auftraggeber)
+- Waffen-Sprites optional für v1.0 (ColorRect-Fallback bleibt)
+
+**Auswirkungen auf Implementierung:**
+- Phase 1 Stream B: `player.tscn` bekommt `AnimatedSprite2D`-Node von Anfang an (mit `use_sprites`-Toggle)
+- Phase 4 Stream H (NEU): Sprite-Integration – `player_animator.gd`, `sprite_config.tres`, Asset-Einbindung
+- Phase 4 Stream F: Musik-OGG-Slots werden vom Agenten vorbereitet, Auftraggeber befüllt sie
+
+---
+
 ### Phase 1 – Core Scene & Movement
 **Ziel**: Spielbares Grundgerüst mit Bewegung, Dodge, Target-Lock und zerstörbarem Terrain in einer Arena. Am Ende dieser Phase können 2 Spieler sich bewegen, ausweichen und Ziele wechseln.
 
@@ -169,8 +188,9 @@ Design-Ergänzungen und -Korrekturen die nach Abschluss von Phase 0 entstehen. L
 **Godot-Nodes (in `player.tscn`):**
 - `CharacterBody2D` → Root
 - `CollisionShape2D` + `CapsuleShape2D` → Hitbox
-- `ColorRect` → Spieler-Körper (Primärfarbe aus `DESIGN.md`)
-- `Line2D` → Rim-Glow (Spieler-Farbe)
+- `ColorRect` → Spieler-Platzhalter (Primärfarbe, sichtbar wenn `use_sprites = false`)
+- `AnimatedSprite2D` → Sprite-Node (vorbereitet, unsichtbar bis `use_sprites = true` in `sprite_config.tres`)
+- `Line2D` → Rim-Glow (Spieler-Farbe, immer aktiv)
 - `GPUParticles2D` → Dodge-Trail
 - `Timer` → Dodge-Cooldown (0.8s)
 
@@ -979,6 +999,52 @@ const COMBOS = {
 - Bot darf **nicht** direkt State im ArenaStateManager ändern – nur über reguläre Spieler-Actions
 - Brutale KI muss trotzdem Timing-Varianz haben (sonst unmenschlich und frustrierend)
 - Bot-Input muss `InputEvent`-kompatibel sein, damit Replay-System (falls geplant) funktioniert
+
+---
+
+#### Stream H – Sprite-Integration
+**Abhängigkeit**: Phase 3 vollständig (Spieler-Node stabil). Externe Assets (Spritesheets) müssen vorliegen.
+
+> **Blockier-Bedingung**: Dieser Stream startet erst wenn der Auftraggeber die Charakter-Spritesheets geliefert hat. Bis dahin laufen Platzhalter (`ColorRect`) weiter. Stream als `⚠ BLOCKIERT (wartet auf externe Assets)` markieren bis Assets vorliegen.
+
+**Zu erstellende Dateien:**
+```
+/scripts/player_animator.gd       ← Animation-State-Machine (reagiert auf animation_changed-Signal)
+/resources/sprite_config.tres     ← Pfade zu Spritesheets, Tile-Größen, use_sprites-Toggle
+```
+
+**Zu ergänzende Dateien (bereits vorhanden):**
+```
+/scenes/player.tscn               ← AnimatedSprite2D-Node hinzufügen (war bereits vorbereitet)
+```
+
+**Sprite-Spezifikation (lt. DESIGN.md):**
+- Tile-Größe: 48×48 px, PNG, transparenter Hintergrund
+- Animationen: `idle` (4F), `walk` (6F×4 Richtungen), `dodge` (4F), `attack_light` (3F), `attack_heavy` (5F), `cast` (4F), `hit` (2F), `death` (6F)
+- Farbneutrale Sprites – Spielerfarbe via `AnimatedSprite2D.modulate`
+
+**Zu implementierende Logik:**
+- `sprite_config.tres`: `use_sprites: bool` – wenn `false` → `ColorRect` sichtbar, `AnimatedSprite2D` unsichtbar (und umgekehrt)
+- `player_animator.gd`: lauscht auf `player.animation_changed(anim_name, direction)`, setzt `AnimatedSprite2D.play()` und `flip_h` für Links/Rechts
+- `player.gd`: emittiert `animation_changed` bei jedem State-Wechsel (Bewegung, Dodge, Cast, Treffer, Tod)
+- Rim-Glow (`Line2D`-Overlay) bleibt unabhängig vom Sprite-System aktiv
+
+**Waffen-Sprites (optional):**
+- Falls Waffen-Sprites geliefert werden: separater `AnimatedSprite2D`-Node in `player.tscn` als Child
+- Fallback: `ColorRect`-Geometrie bleibt aktiv wenn kein Waffen-Sprite vorhanden
+
+**Akzeptanzkriterien:**
+- [ ] `use_sprites = false` → Platzhalter-ColorRect sichtbar, kein Fehler
+- [ ] `use_sprites = true` → AnimatedSprite2D spielt korrekte Animation ab
+- [ ] Alle 8 Animationen wechseln korrekt bei State-Übergängen
+- [ ] Spielerfarbe via `modulate` korrekt aufgemalt
+- [ ] Rim-Glow bleibt sichtbar unabhängig vom Sprite-Modus
+- [ ] Kein visuelles Flackern beim Animationswechsel
+
+**Fallstricke:**
+- `AnimatedSprite2D.play()` von außen aufrufen wenn Animation bereits läuft → erst prüfen ob `animation == anim_name` bevor neu starten
+- `flip_h` für Links/Rechts reicht – keine gespiegelten Richtungs-Frames nötig (spart ~50% Spritesheet-Aufwand)
+- Spritesheet-Import in Godot: `filter = false` (Pixelart!), sonst verschwommene Sprites
 
 ---
 
