@@ -62,6 +62,27 @@ Dieses Dokument sammelt externe Tools und Workflows die bei der Asset-Erstellung
 
 ## Pixelart-Sprites
 
+### PixelLab (https://www.pixellab.ai) ⭐ Empfehlung für HighFire
+**Typ**: KI-Pixelart-Generator speziell für Spiele, cloudbasiert, kein leistungsstarker PC nötig
+**Kosten**: Kostenloser Einstieg, kostenpflichtige Pläne für mehr Credits
+
+**Warum ideal für HighFire:**
+- **4-Richtungs-Rotation auf Knopfdruck**: Konzeptbild hochladen → automatisch alle 4 Richtungen als Spritesheet – löst das aufwändigste Problem bei Top-Down-Sprites
+- **Animations-Generator**: Walk, Attack, Dodge, Cast per Text-Prompt oder Skeleton-Steuerung, direkt als animiertes Spritesheet exportierbar
+- **Style-Konsistenz**: Alle Charaktere und Items bleiben im selben visuellen Stil – Tool „versteht" dein Referenzbild beim Generieren neuer Assets
+- **Top-Down-Support**: Explizit für Top-Down- und isometrische Spiele ausgelegt
+- **Tilesets & Environments**: Auch Arena-Tiles und Hintergründe generierbar (bis 400×400 px)
+- **True Inpainting**: Teile eines Sprites gezielt bearbeiten ohne den Rest zu verändern
+
+**Empfohlener Workflow für HighFire:**
+1. Charakter-Konzept generieren (Text-Prompt: `top-down pixel art warrior, 48x48, neutral colors, dark fantasy`)
+2. Rotation-Tool: automatisch 4 Richtungen erzeugen
+3. Animations-Tool: `walk`, `attack_light`, `attack_heavy`, `cast`, `dodge`, `hit`, `death` generieren
+4. Als Spritesheet exportieren (PNG, transparent)
+5. Optional: Feinschliff in Aseprite
+
+---
+
 ### Aseprite (https://www.aseprite.org)
 **Typ**: Pixelart-Editor & Animations-Tool, ca. 20€ (einmalig)
 **Empfehlung**: Standard-Tool für Spiel-Pixelart, Animation frame-weise, Spritesheet-Export direkt eingebaut
