@@ -107,3 +107,30 @@ Für Scripts die State-Logik enthalten (z. B. `arena_state_manager.gd`, `tile.gd
 - Relevante Designentscheidungen direkt in `DESIGN.md` ergänzen (nicht nur im Code kommentieren)
 - Jeder Stream-Abschluss wird in `PLAN_PHASES.md` als `✅ ABGESCHLOSSEN` markiert
 - Pull Requests für jeden abgeschlossenen Stream (nicht für jeden Commit)
+
+---
+
+## Konsistenz-Check-Pflicht
+
+**Bei jeder Ergänzung oder Änderung an einem der Kerndokumente (`DESIGN.md`, `PLAN_PHASES.md`, `AGENTS.md`) gilt:**
+
+1. **Vor dem Einarbeiten** prüfen ob die neue Information konsistent ist mit:
+   - Bestehenden Einträgen in `DESIGN.md` (Werte, Namen, Mechaniken)
+   - Dateilisten und Akzeptanzkriterien in `PLAN_PHASES.md` (Pfade, Abhängigkeiten, Streams)
+   - Ordnerstruktur und Konventionen aus `AGENTS.md`
+
+2. **Bei erkannten Inkonsistenzen:**
+   - Änderung **nicht stillschweigend** einarbeiten
+   - Widerspruch dem Auftraggeber erläutern
+   - Mindestens 2 Lösungsoptionen vorschlagen (plus Option „Du entscheidest")
+   - Erst nach Rückmeldung des Auftraggebers umsetzen
+
+3. **Was als Inkonsistenz gilt:**
+   - Dateiname oder Pfad weicht von bestehendem Eintrag ab
+   - Spielmechanik-Wert (Schaden, Cooldown, Dauer) widerspricht `DESIGN.md`-Tabelle
+   - Neues System hat kein zugehöriges `.tres` / AutoLoad-Eintrag
+   - Neuer Statuseffekt, Combo oder Bot-Parameter fehlt in einem der anderen Dokumente
+   - Neue AutoLoad-Registrierung ist nicht in `project.godot`-Konfiguration geplant
+   - Ordner-Zuordnung verstößt gegen die in `AGENTS.md` definierte Struktur
+
+4. **Gilt auch bei Iterationen** (Phase 0B-Stil): Jede neue Design-Iteration wird zuerst auf Auswirkungen für laufende und geplante Streams geprüft.

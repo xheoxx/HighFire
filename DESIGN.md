@@ -4,6 +4,35 @@ Zweck: Dieses Dokument übersetzt drei visuelle Moodboards in konkretes, systemo
 
 ---
 
+## Spielpositionierung & Design-Leitlinie
+
+### Referenzpunkt: Bomberman
+HighFire teilt mit Bomberman das Fundament das Klassiker ausmacht: **sofort verständlich, sofort spaßig, sofort kompetitiv**. Lokaler Multiplayer, Arena, zerstörbares Terrain – dieser erste Eindruck ist kein Problem, sondern ein Vertrauensvorschuss beim Spieler.
+
+Bomberman ist der **Einstiegspunkt**, nicht das Ziel.
+
+### Die eigenen Stärken – immer herausstellen
+
+| HighFire | Bomberman |
+|----------|-----------|
+| Freie 8-Richtungs-Bewegung + Dodge – du bist nie gefangen | Grid-Lock – eine falsche Bombe und du stirbst |
+| Direkte Konfrontation, Skill-Ausdruck ist sichtbar | Indirekter Kampf, viel Positions- und Glückszufall |
+| Fighting-Game-Tiefe – Combos lohnen sich zu lernen | Flache Mechaniken – Runde 1 und Runde 100 spielen sich gleich |
+| Statuseffekte + Reaktionen – Synergien entstehen spontan | Keine Synergie-Systeme |
+| Terrain als taktische Deckung (Line-of-Sight) | Terrain nur als Hindernis |
+| Spellcrafting + Weaponcrafting – Ausdruck durch Builds | Keine Customization |
+
+### Goldene Regel für alle Implementierungsentscheidungen
+> **Der erste Eindruck muss so schnell funktionieren wie Bomberman – zwei Spieler, Controller rein, sofort kämpfen, sofort lachen. Die Tiefe darf nie eine Hürde für den ersten Spaß sein.**
+
+Konkret bedeutet das:
+- Jede neue Mechanik muss ohne Erklärung zumindest *ausprobierbar* sein
+- Komplexität (Combos, Crafting, Statuseffekte) ist Belohnung für Erfahrung – kein Pflichtprogramm
+- Der Combo-Assist (Accessibility) ist keine Krücke, sondern ein legitimer Spielmodus
+- Wenn eine Entscheidung das Spiel taktisch reicher aber sofort weniger spaßig macht: erst testen, dann entscheiden
+
+---
+
 ## Moodboard 01 – Arcane Foundry (Arena-Atmosphäre)
 
 ### Design-Absicht
@@ -643,6 +672,16 @@ Das Gesetz der abnehmenden Erträge verhindert, dass ein einziges Element einen 
 - **Allein**: Kein Effekt auf Kampfwerte — reiner Reaktions-Enabler
 - **Synergie**: Wird durch Blitz-Treffer zu NASS+BLITZ-Reaktion konsumiert
 
+#### UNSICHTBARKEIT *(Schatten, Sekundäreffekt)*
+- **Typ**: Caster-Buff (Selbst-Anwendung — der Spieler der den Schatten-Spell wirkt wird unsichtbar, kein Debuff auf Gegner)
+- **Dauer**: 1.5s (nicht stapelbar — erneutes Auslösen refresht die Dauer)
+- **Stapel**: Nicht stapelbar
+- **Bricht bei**: Erstem ausgeführten Angriff oder Spell-Cast (Angriff beendet Unsichtbarkeit sofort)
+- **Visuell**: Charakter-Alpha auf 30% — für alle anderen Spieler kaum sichtbar; eigener Spieler sieht sich selbst bei 60% Alpha (damit er sich selbst steuern kann)
+- **Technisch**: Flag `is_invisible` auf `player.gd`; `target_system.gd` ignoriert unsichtbare Spieler beim Auto-Lock; manueller Lock bleibt erhalten (Spieler der locked hält seinen Lock)
+- **Synergie**: Kein Reaktions-Primer — funktioniert unabhängig von anderen Effekten
+- **Anti-Frustrations-Regel**: Nach Ende der Unsichtbarkeit 1.0s Immunität gegen erneute Unsichtbarkeit (verhindert permanentes Verschwinden durch Spam)
+
 #### HEILUNG ÜBER ZEIT *(Licht, HoT)*
 - **Typ**: Regen (HP-Regeneration über Zeit)
 - **Heilung pro Tick**: `⚠ offen — Balance-Check`
@@ -678,6 +717,7 @@ Damit kein Spieler durch reine CC-Ketten aus dem Kampf ausgesperrt wird:
 |-------|--------|
 | **Einfrieren-Immunität** | Nach Ende eines Einfrierens: 3.0s Immunität gegen erneutes Einfrieren |
 | **Betäubungs-Immunität** | Nach Ende einer Betäubung: 1.5s Immunität gegen erneute Betäubung |
+| **Unsichtbarkeits-Immunität** | Nach Ende der Unsichtbarkeit: 1.0s Immunität gegen erneute Unsichtbarkeit |
 | **Dodge bricht CC** | Ein erfolgreicher Dodge entfernt alle aktiven Soft-CC-Stacks (Verlangsamung, Betäubung, Blind) — Hard-CC (Einfrieren) wird nicht gebrochen |
 | **Reaktions-Cooldown** | Dieselbe Reaktionsart kann auf dem selben Ziel nicht zweimal in 3.0s ausgelöst werden |
 | **Max-Debuff-Cap** | Ein Ziel kann gleichzeitig maximal 3 verschiedene Effekt-**Typen** tragen (Stacks innerhalb eines Typs nicht mitgezählt) |
@@ -816,7 +856,6 @@ Jede Aktion braucht eine sofortige, spürbare Rückmeldung. Juice macht den Unte
 | Dodge-Geschwindigkeit | 600 px/s | Ja |
 | Dodge-Dauer | 0.2s | Nein |
 | Dodge-Cooldown | 0.8s | Ja |
-| Spell-Slots | 3 | Nein |
 
 ### Schadensklassen
 
@@ -840,6 +879,95 @@ Jede Aktion braucht eine sofortige, spürbare Rückmeldung. Juice macht den Unte
 ### Respawn
 * Standard: kein Respawn (Last Man Standing)
 * Optionaler Modus: 3 Leben, Respawn nach 3s mit kurzer Unverwundbarkeit (1.5s)
+
+---
+
+## Item-System
+
+### Designprinzip
+Items droppen beim Zerstören von Terrain-Tiles und werden automatisch aufgesammelt wenn ein Spieler darüber läuft. Es gibt keine feste Slot-Begrenzung – alle aktiven Items werden in einer **horizontalen Item-Leiste** am oberen oder unteren Bildschirmrand dargestellt. Eine Slot-Begrenzung kann nach der Testphase auf Basis von Balancing-Erfahrungen eingeführt werden.
+
+Items sind entweder **passiv** (wirken dauerhaft solange im Besitz) oder **bedingt** (aktivieren sich automatisch bei Eintreten einer definierten Bedingung). Es gibt keine manuell zu betätigende Item-Taste.
+
+---
+
+### Item-Drop-Mechanik
+- **Quelle**: Jedes zerstörte Tile (Zustand `DESTROYED`) hat eine konfigurierbare Drop-Chance
+- **Drop-Chance**: Standard 15%, konfigurierbar per `item_config.tres`
+- **Item-Typ**: zufällig aus einer gewichteten Tabelle (auch in `item_config.tres`)
+- **Aufsammeln**: Kollision Spieler ↔ Item-Node → sofort in Item-Leiste aufnehmen, Item-Node entfernen
+- **Item-Node**: kleines `ColorRect` + `Label` (Symbol) auf dem Boden, kurze Einblend-Animation (Tween)
+
+---
+
+### Item-Typen
+
+| ID | Name | Typ | Effekt | Bedingung |
+|----|------|-----|--------|-----------|
+| `shield_shard` | Splitter-Schild | Passiv | Reduziert nächsten eingehenden Schaden um 50% (einmalig, danach verbraucht) | – |
+| `ember_core` | Glut-Kern | Passiv | Alle Treffer hinterlassen Brennen-Statuseffekt (1 Stack) für 5s | – |
+| `frost_vein` | Frost-Ader | Passiv | Alle Treffer hinterlassen Nass-Statuseffekt für 5s (Reaktionsprimer) | – |
+| `speed_rune` | Tempo-Rune | Passiv | +20% Bewegungsgeschwindigkeit für 8s, dann verbraucht | – |
+| `life_shard` | Leben-Splitter | Bedingt | Heilt 25 HP automatisch wenn HP unter 30% fallen (einmalig) | HP < 30% |
+| `dodge_crystal` | Ausweich-Kristall | Bedingt | Löst automatisch einen Dodge aus wenn ein Projektil < 80px entfernt erkannt wird (einmalig) | Projektil-Proximity |
+| `overcharge` | Überladung | Bedingt | Nächster Spell nach Aufsammeln verursacht 2× Schaden (einmalig, verfällt nach 10s ungenutzt) | Erster Spell-Cast |
+| `terrain_anchor` | Terrain-Anker | Passiv | Spieler fällt nicht durch zerstörte Tiles (schwebt über Lücken) für 6s | – |
+
+> **⚠ Balance-Check nach Testphase**: Item-Spawn-Rate, Dauer-Werte und Effektstärken sind Startwerte. Alle Werte liegen in `item_config.tres` und können ohne Code-Änderung angepasst werden.
+
+---
+
+### HUD-Darstellung (Item-Leiste)
+- **Position**: am unteren Bildschirmrand, zentriert unter dem Spieler-HUD
+- **Darstellung pro Item**: `ColorRect` (Hintergrund in Element-Farbe, gedimmt) + `Label` (Icon-Symbol, weiß) + bei bedingten Items: kleiner Zustandsindikator (Pulsieren wenn Bedingung fast erfüllt)
+- **Layout**: horizontale `HBoxContainer`, keine feste Maximalbreite in der Testphase
+- **Verbraucht**: Item-Icon graut aus und verschwindet nach 0.5s (Tween)
+- **Neu aufgesammelt**: kurzes Aufleuchten (Flash-Tween) in Spielerfarbe
+
+#### Item-Farb-Kodierung (HUD-Hintergrund)
+| Element | Hex |
+|---------|-----|
+| Schutz (Schild, Anker) | `#1A3A5C` (Dunkelblau) |
+| Angriff (Glut, Überladung) | `#5C1A1A` (Dunkelrot) |
+| Reaktion (Frost) | `#1A4A5C` (Dunkeltürkis) |
+| Bewegung (Tempo) | `#3A4A1A` (Dunkelgrün) |
+| Überleben (Leben, Dodge) | `#3A1A5C` (Dunkelviolett) |
+
+---
+
+### Technische Architektur
+
+```
+/scripts/item_system.gd          ← Verwaltet aktive Items pro Spieler, prüft Bedingungen in _process()
+/scripts/item_pickup.gd          ← Node auf dem Boden (Area2D), emittiert picked_up(item_id, player_id)
+/scenes/item_pickup.tscn         ← Visueller Item-Drop (ColorRect + Label + AnimationPlayer)
+/scenes/ui/item_bar_ui.tscn      ← HUD-Element: horizontale Item-Leiste
+/scripts/item_bar_ui.gd          ← Reagiert auf item_added / item_consumed Signale
+/resources/item_config.tres      ← Drop-Chancen, Gewichtungstabelle, alle Item-Werte
+```
+
+**Signale:**
+- `item_system` emittiert `item_added(player_id, item_id)`
+- `item_system` emittiert `item_consumed(player_id, item_id)`
+- `item_pickup.gd` emittiert `picked_up(item_id, player_id)` → `item_system` empfängt
+
+**Bedingungsprüfung:**
+- Passive Items: einmalig bei Aufnahme anwenden, Flag `is_active = true` setzen
+- Bedingte Items: `item_system._process(delta)` prüft pro Spieler alle bedingten Items gegen ihre Trigger-Bedingung
+- Verbrauchte Items: Flag `is_consumed = true`, wird in nächstem Frame aus Liste entfernt und Signal `item_consumed` gefeuert
+
+**Integration mit bestehenden Systemen:**
+- `tile.gd` → bei `DESTROYED`-Übergang: `item_system.try_drop(tile_position)` aufrufen
+- `damage_system.gd` → vor Schadensanwendung: `item_system.get_damage_modifier(player_id)` abfragen (für `shield_shard`, `overcharge`)
+- `player.gd` → `speed` wird durch `item_system.get_speed_multiplier(player_id)` skaliert
+- `status_effect_component.gd` → `ember_core` / `frost_vein` hookten sich in `damage_system`-Treffer ein via `item_system`-Signal `on_hit_effect(attacker_id, target_id)`
+
+---
+
+### Phase-Zuordnung
+Das Item-System wird in **Phase 2 Stream B** (Spellcrafting) als zusätzliche Komponente implementiert, da es dieselbe Infrastruktur nutzt (`status_effect_component`, `damage_system`, Spieler-Signale). Der Drop-Trigger in `tile.gd` wird in Phase 2 nachgetragen (Stream B koordiniert mit Phase 1 Stream D).
+
+> **Slot-Limit-Entscheidung nach Testphase**: Falls in der Testphase Übersichtlichkeit ein Problem wird, wird ein konfigurierbares Maximum (z.B. 4 Items) in `item_config.tres` eingeführt. Die HUD-Darstellung unterstützt das bereits durch die `HBoxContainer`-Struktur.
 
 ---
 
@@ -908,9 +1036,11 @@ Spieler lernen durch Tun, nicht durch Lesen. Jede Mechanic wird isoliert eingef�
 
 ### Farbenblindmodus
 * Spieler-Farbidentität wechselbar zu farbenblindfreundlichen Paletten:
-  - Deuteranopie (Rot-Grün): Blau/Orange statt Cyan/Magenta
-  - Protanopie: Gelb/Blau statt Grün/Rot
+  - **Deuteranopie** (Rot-Grün-Schwäche): Blau/Orange statt Cyan/Magenta — Spieler 1: `#0077FF`, Spieler 2: `#FF7700`, Spieler 3: `#FFFFFF`, Spieler 4: `#FF00FF`
+  - **Protanopie** (Rot-Schwäche): Gelb/Blau statt Grün/Rot — Spieler 1: `#0077FF`, Spieler 2: `#FFDD00`, Spieler 3: `#FFFFFF`, Spieler 4: `#AA00FF`
+  - **Tritanopie** (Blau-Gelb-Schwäche): Orange/Pink statt Gold/Gelb — Spieler 1: `#FF6600`, Spieler 2: `#FF007F`, Spieler 3: `#00CC88`, Spieler 4: `#CC0000`
 * Option im Einstellungsmenü unter „Barrierefreiheit"
+* Alle 3 Paletten mit Coblis oder ähnlichem Simulator testen vor Festlegung der finalen Hex-Werte
 
 ### Controller & Input
 * Vollständiges Button-Remapping für alle Aktionen (persistiert in `user://controls.tres`)
@@ -948,7 +1078,8 @@ Nur `.tres`-Ressourcen-Dateien im `user://mods/`-Ordner. Kein Quellcode-Zugriff 
 | `res://resources/weapon_definitions.tres` | Archetypen, Stats, Upgrade-Nodes | ✅ |
 | `res://resources/balance_config.tres` | HP, Speed, Dodge, Magie-Timeout, Schadensklassen | ✅ |
 | `res://resources/bot_config.tres` | KI-Schwierigkeitsstufen, Reaktionszeiten | ✅ |
-| `res://resources/arena_config.tres` | Spawn-Positionen, Tile-Konfiguration pro Arena | ✅ |
+| `res://resources/arena_config.tres` | Spawn-Positionen pro Arena, Arena-spezifische Tile-Verteilung (welche Tiles zerstörbar sind) | ✅ |
+| `res://resources/tile_config.tres` | Tile-interne Werte: Farben der Zustände (INTACT/CRACKED/DESTROYED), HP-Schwellwerte für State-Wechsel | ✅ |
 
 **Mod-Ordner-Konvention:**
 ```
@@ -1224,8 +1355,12 @@ Bots ermöglichen Solo-Spiel, dienen als Trainingspartner im Tutorial und fülle
 ### Technische Umsetzung
 ```
 /scripts/bot_controller.gd        → Bot-KI-Hauptlogik
-/scripts/bot_input.gd             → Implementiert player_input-Interface
-/resources/bot_config.tres        → Schwierigkeits-Parameter
+/scripts/bot_input.gd             → Implementiert player_input-Interface (BotInput-Klasse überschreibt get_move_vector() und get_action())
+/resources/bot_config.tres        → Schwierigkeits-Parameter (zentrale Datei, referenziert die 4 Stufen-Resources)
+/resources/bot_einsteiger.tres    → Einsteiger-Parameter (Reaktionszeit 600ms, Fehlerrate etc.)
+/resources/bot_normal.tres        → Normal-Parameter (Reaktionszeit 350ms)
+/resources/bot_experte.tres       → Experte-Parameter (Reaktionszeit 150ms)
+/resources/bot_meister.tres       → Meister-Parameter (Reaktionszeit 80ms)
 ```
 
 ---
@@ -1258,7 +1393,7 @@ Bots ermöglichen Solo-Spiel, dienen als Trainingspartner im Tutorial und fülle
 | HP-Balken Voll | Grün | `#00FF88` |
 | HP-Balken Mittel | Gelb | `#FFCC00` |
 | HP-Balken Kritisch | Rot | `#FF2200` |
-| Spell-Slot Leer | Dunkelgrau | `#333344` |
+| Item-Leiste Hintergrund (leer) | Dunkelgrau | `#333344` |
 | Combo-Chain Aktiv | Gold | `#FFD700` |
 | Combo-Chain Fehler | Warnrot | `#FF4400` |
 

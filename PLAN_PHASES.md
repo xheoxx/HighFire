@@ -100,6 +100,24 @@ Design-Ergänzungen und -Korrekturen die nach Abschluss von Phase 0 entstehen. L
 
 ---
 
+#### Iteration 4 – Item-System ✅ ABGESCHLOSSEN
+**Geänderte Dokumente**: `DESIGN.md`, `PLAN_PHASES.md`
+
+**Inhalt:**
+- Item-System vollständig dokumentiert: 8 Item-Typen (passiv + bedingt), Drop via Tile-Zerstörung
+- Keine feste Slot-Begrenzung in der Testphase – horizontale Item-Leiste am Bildschirmrand
+- Item-Farb-Kodierung nach Kategorie (Schutz, Angriff, Reaktion, Bewegung, Überleben)
+- Slot-Limit-Entscheidung explizit auf nach der Testphase verschoben
+- Farbpalette: `Spell-Slot Leer` → `Item-Leiste Hintergrund (leer)` umbenannt
+- Basis-Spielerwerte-Tabelle: `Spell-Slots 3`-Zeile + TODO-Vermerk entfernt
+
+**Auswirkungen auf Implementierung:**
+- Phase 1 Stream F: `item_config.tres` in Resource-Dateiliste aufgenommen (9. Resource-Datei)
+- Phase 2 Stream B: 5 neue Dateien (item_system, item_pickup, item_bar_ui + Szenen), Akzeptanzkriterien erweitert
+- Phase 2 Stream B koordiniert mit Phase 1 Stream D: `tile.gd` muss `item_system.try_drop()` bei DESTROYED-Zustand aufrufen
+
+---
+
 ### Phase 1 – Core Scene & Movement
 **Ziel**: Spielbares Grundgerüst mit Bewegung, Dodge, Target-Lock und zerstörbarem Terrain in einer Arena. Am Ende dieser Phase können 2 Spieler sich bewegen, ausweichen und Ziele wechseln.
 
@@ -269,7 +287,7 @@ project.godot:
                     ≥ 200ms = Halten) wird im Motion-Input-Parser (Phase 2 Stream A)
                     implementiert – nicht in project.godot. Beide Action-Sets müssen
                     trotzdem definiert sein damit InputMap sie kennt.
-  [autoload]      → ModLoader (erster Eintrag!), ArenaStateManager, DamageSystem, MusicManager
+  [autoload]      → ModLoader (erster Eintrag!), ArenaStateManager, DamageSystem, MusicManager, SfxManager
   [layer_names]   → Physics-Layer lt. DESIGN.md (Spieler, Terrain, Projektile, Wände, Raycast)
   [display]       → Viewport-Größe: 1920×1080, Stretch-Mode: canvas_items
 ```
@@ -279,7 +297,7 @@ project.godot:
 
 **Akzeptanzkriterien:**
 - [ ] Alle Input-Actions in `project.godot` definiert (mind. 12 Actions)
-- [ ] AutoLoad-Reihenfolge korrekt: ModLoader als erster Eintrag, danach ArenaStateManager, DamageSystem, MusicManager
+- [ ] AutoLoad-Reihenfolge korrekt: ModLoader als erster Eintrag, danach ArenaStateManager, DamageSystem, MusicManager, SfxManager
 - [ ] Physics-Layer 1–5 benannt lt. DESIGN.md
 - [ ] Viewport-Größe auf 1920×1080 gesetzt
 
@@ -301,11 +319,13 @@ project.godot:
 /resources/balance_config.tres      ← Alle Balance-Werte lt. DESIGN.md
 /resources/spell_definitions.tres   ← Element-Kodierung, Kombinations-Tabelle
 /resources/spell_values.tres        ← Schaden, Reichweite, Cooldown pro Spell
-/resources/combo_definitions.tres   ← D-Pad-Sequenz → Spell-Mapping (Modus R)
+/resources/combo_definitions.tres   ← Struktur-Stub: D-Pad-Sequenz-Mapping (wird von Phase 2 Stream A befüllt)
 /resources/weapon_definitions.tres  ← Archetypen, Stats, Upgrade-Nodes
 /resources/status_effects.tres      ← Alle Effekt-Definitionen, Stapel-Parameter, Icon-Farben
-/resources/bot_config.tres          ← KI-Schwierigkeitsstufen-Parameter
-/resources/arena_config.tres        ← Spawn-Positionen, Tile-Config pro Arena
+/resources/bot_config.tres          ← KI-Schwierigkeitsstufen-Parameter (zentrale Resource)
+/resources/arena_config.tres        ← Spawn-Positionen, Arena-spezifische Tile-Verteilung pro Arena
+/resources/tile_config.tres         ← Tile-interne Werte: Farben (INTACT/CRACKED/DESTROYED), HP-Schwellwerte
+/resources/item_config.tres         ← Item-Drop-Chancen, Gewichtungstabelle, alle Item-Werte
 ```
 
 **Zu implementierende Logik:**
@@ -317,11 +337,11 @@ project.godot:
 - Alle Resource-Dateien mit sinnvollen Startwerten aus `DESIGN.md` befüllen (keine leeren Stubs)
 
 **Koordination mit Stream E:**
-- Stream E muss in `project.godot` den AutoLoad `ModLoader` als **ersten** Eintrag eintragen (vor `ArenaStateManager`, `DamageSystem`, `MusicManager`)
+- Stream E muss in `project.godot` den AutoLoad `ModLoader` als **ersten** Eintrag eintragen (vor `ArenaStateManager`, `DamageSystem`, `MusicManager`, `SfxManager`)
 
 **Akzeptanzkriterien:**
 - [ ] `mod_loader.gd` startet ohne Fehler auch wenn `user://mods/` leer ist
-- [ ] Alle 7 Resource-Dateien existieren und haben valide Startwerte
+- [ ] Alle 8 Resource-Dateien existieren und haben valide Startwerte
 - [ ] `hook_registry.gd` registriert und ruft Hooks korrekt auf
 - [ ] Laden einer Test-Mod aus `user://mods/test_mod/` überschreibt einen Wert in `balance_config.tres`
 - [ ] Signal `mod_loading_complete` wird korrekt gefeuert
@@ -346,11 +366,12 @@ project.godot:
 /scripts/motion_input_parser.gd   ← Gesten-Erkennung
 /scripts/combo_chain.gd           ← Combo-Visualisierung
 /scenes/combo_chain_ui.tscn       ← Rune-Kette HUD-Element
-/resources/combo_definitions.tres ← Dictionary aller Combos
 ```
 
+> **Hinweis `combo_definitions.tres`**: Die Datei wurde als Struktur-Stub von Phase 1 Stream F angelegt. Phase 2 Stream A ist verantwortlich für das **Befüllen** mit allen finalen Combo-Definitionen (D-Pad-Sequenz → Spell-Mapping, Modus R + B). Nicht neu erstellen.
+
 **Zu implementierende Logik:**
-- Ring-Buffer der letzten D-Pad-/Stick-Richtungen (max. 8 Einträge, 0.4s Zeitfenster)
+- Ring-Buffer der letzten D-Pad-/Stick-Richtungen (max. 8 Einträge, Zeitfenster **modus-abhängig**: 0.4s für Modus L/R, 0.6s für Modus B)
 - D-Pad: Direktes Richtungs-Enum aus `InputEvent` (digital, kein Deadzone nötig)
 - Analogstick (falls vorhanden): Richtungsquantisierung mit Deadzone 0.3 → 8-Richtungs-Enum
 - Pattern-Matching: Buffer gegen `combo_definitions`-Dictionary prüfen (längster Match gewinnt)
@@ -409,6 +430,11 @@ const COMBOS = {
 /scripts/reaction_checker.gd         ← Prüft Reaktions-Tabelle bei jedem add_effect()-Aufruf
 /scenes/status_effect_hud.tscn       ← Icon-Visualisierung über Charakter (ColorRect + Label + Timer-Balken)
 /scripts/status_effect_hud.gd        ← HUD-Update-Logik (reagiert auf effect_changed-Signal)
+/scripts/item_system.gd              ← Verwaltet aktive Items pro Spieler, prüft Bedingungen in _process()
+/scripts/item_pickup.gd              ← Area2D-Node auf dem Boden, emittiert picked_up(item_id, player_id)
+/scenes/item_pickup.tscn             ← Visueller Item-Drop (ColorRect + Label + AnimationPlayer)
+/scenes/ui/item_bar_ui.tscn          ← HUD-Element: horizontale Item-Leiste (keine Slot-Begrenzung in Testphase)
+/scripts/item_bar_ui.gd              ← Reagiert auf item_added / item_consumed Signale
 ```
 
 **Zu implementierende Logik:**
@@ -461,6 +487,11 @@ const COMBOS = {
 - [ ] Status-Icons erscheinen korrekt über dem betroffenen Charakter mit Stack-Zahl und Timer-Balken
 - [ ] Kein Spell wird gewirkt wenn Magie-Timeout aktiv (Eingabe verfällt lautlos)
 - [ ] Werte aus `spell_values.tres` und `status_effects.tres` werden geladen – kein Wert ist im Code hardcodiert
+- [ ] Items droppen bei Tile-Zerstörung mit korrekter Drop-Chance (aus `item_config.tres`)
+- [ ] Aufsammeln fügt Item zur Item-Leiste hinzu (Signal `item_added` korrekt gefeuert)
+- [ ] Passive Items wirken sofort nach Aufnahme (z.B. `speed_rune` erhöht Bewegungsgeschwindigkeit)
+- [ ] Bedingte Items lösen korrekt bei Bedingungseintritt aus (z.B. `life_shard` bei HP < 30%)
+- [ ] Verbrauchte Items verschwinden aus der Item-Leiste
 
 **Fallstricke:**
 - Projektil-Instanziierung: `preload()` statt `load()` für Performance (Szene bei Spielstart vorladen)
@@ -562,6 +593,7 @@ const COMBOS = {
 - [ ] State-Wechsel feuern korrekte Signale
 - [ ] Countdown-UI erscheint und zählt korrekt herunter
 - [ ] Runde endet korrekt bei 1 verbliebenem Spieler
+- [ ] Runde endet korrekt wenn Timer abgelaufen (konfigurierbar: aus / 2 min / 5 min)
 - [ ] Kein System kann State außerhalb des Managers ändern
 - [ ] State-Wechsel sind deterministisch (gleiche Inputs → gleiche States)
 
@@ -665,14 +697,17 @@ const COMBOS = {
 **Zu erstellende Dateien:**
 ```
 /scenes/ui/main_menu.tscn          ← Hauptmenü-Szene
-/scenes/ui/settings_menu.tscn     ← Einstellungen (Audio, Video, Controls)
+/scenes/ui/settings_menu.tscn     ← Einstellungen (Audio, Video, Controls) — Phase 3E ist Owner
 /scenes/ui/lobby.tscn             ← Lobby für Arena-/Spielerauswahl
 /scenes/ui/pause_menu.tscn        ← In-Game-Pause-Overlay
 /scripts/main_menu.gd             ← Menü-Navigation
+/scripts/settings_menu.gd         ← Einstellungs-Logik (Tabs: Video/Audio/Steuerung/Barrierefreiheit/Spiel)
 /scripts/settings_manager.gd      ← Persistente Einstellungen (user://settings.tres)
 /scripts/lobby.gd                 ← Lobby-Logik (Spieler hinzufügen, Arena wählen)
 /scripts/pause_menu.gd            ← Pause-Verhalten lt. DESIGN.md
 ```
+
+> **Hinweis**: `settings_menu.tscn` und `settings_menu.gd` werden hier vollständig angelegt (inkl. aller Tabs lt. DESIGN.md). Phase 4 Stream E erweitert nur `accessibility_manager.gd` — erstellt keine neue settings_menu-Szene.
 
 **Zu implementierende Logik:**
 - Hauptmenü-Buttons: Spielen, Tutorial, Einstellungen, Beenden (lt. `DESIGN.md`)
@@ -740,8 +775,8 @@ const COMBOS = {
 
 **Zu erstellende Dateien:**
 ```
-/audio/sfx_manager.gd             ← Zentraler Sound-Controller (AutoLoad)
-/audio/tone_generator.gd          ← Prozeduraler Ton-Generator
+/scripts/sfx_manager.gd           ← Zentraler Sound-Controller (AutoLoad)
+/scripts/tone_generator.gd        ← Prozeduraler Ton-Generator
 /scenes/audio_player.tscn         ← AudioStreamPlayer2D-Prefab
 ```
 
@@ -836,7 +871,7 @@ const COMBOS = {
 /scripts/accessibility_manager.gd ← Zentrale Accessibility-Einstellungen (AutoLoad)
 /scenes/settings_menu.tscn        ← Einstellungsmenü
 /scripts/settings_menu.gd         ← Menü-Logik
-/resources/user_preferences.gd    ← Präferenz-Resource-Klasse
+/scripts/user_preferences.gd      ← Präferenz-Resource-Klasse (extends Resource, liegt unter /scripts/)
 ```
 
 **Zu implementierende Logik:**
@@ -908,21 +943,23 @@ const COMBOS = {
 **Zu erstellende Dateien:**
 ```
 /scripts/bot_controller.gd         ← Haupt-Bot-Logik (ersetzt Input für Bot-Spieler)
+/scripts/bot_input.gd              ← BotInput-Klasse implementiert player_input-Interface (überschreibt get_move_vector() und get_action())
 /scripts/bot_difficulty.gd         ← Schwierigkeitsstufen-Konfiguration
-/resources/bot_easy.tres           ← Schwierigkeits-Resource (Reaktionszeit, Fehlerrate)
-/resources/bot_medium.tres
-/resources/bot_hard.tres
-/resources/bot_brutal.tres
+/resources/bot_config.tres         ← Zentrale Schwierigkeits-Resource (referenziert die 4 Stufen-Resources)
+/resources/bot_einsteiger.tres     ← Einsteiger-Parameter (Reaktionszeit, Fehlerrate)
+/resources/bot_normal.tres
+/resources/bot_experte.tres
+/resources/bot_meister.tres
 ```
 
 **Zu implementierende Logik (lt. DESIGN.md Bot-KI):**
-- Bot ersetzt `_input()` mit eigenem Entscheidungssystem
+- Bot ersetzt `_input()` mit eigenem Entscheidungssystem via `bot_input.gd`
 - State-Machine für Bot: `IDLE → APPROACH → ATTACK → DODGE → RETREAT`
 - Pro Schwierigkeitsstufe (lt. DESIGN.md):
-  - **Anfänger**: Reaktionszeit 0.8s, keine Combos, zufällige Bewegung
-  - **Mittel**: Reaktionszeit 0.4s, 2-Schritt-Combos, Dodge bei erkanntem Projektil
-  - **Schwer**: Reaktionszeit 0.15s, volle Combos, prädiktives Dodging
-  - **Brutal**: Reaktionszeit 0.05s, perfekte Combos, Frame-genaues Dodging, Terrain-Awareness
+  - **Einsteiger**: Reaktionszeit 600ms, keine Combos, zufällige Bewegung
+  - **Normal**: Reaktionszeit 350ms, 2-Schritt-Combos, Dodge bei erkanntem Projektil
+  - **Experte**: Reaktionszeit 150ms, volle Combos, prädiktives Dodging
+  - **Meister**: Reaktionszeit 80ms, perfekte Combos, Frame-genaues Dodging, Terrain-Awareness
 - Target-Auswahl: Nächster Spieler mit niedrigstem HP
 - LOS-Prüfung vor Angriff
 - Bot-Nodes verwenden gleiche `player.tscn`-Szene, nur mit `bot_controller.gd` als Script-Override
@@ -1041,6 +1078,8 @@ const COMBOS = {
 
 #### Stream E – Progressions- & Unlock-System
 **Abhängigkeit**: Stream C (Steam-Integration für Achievement-Sync) und Phase 4 vollständig.
+
+> **project.godot-Erweiterung**: Dieser Stream darf `project.godot` um den `ProgressionManager`-AutoLoad-Eintrag sowie den `SteamManager`-AutoLoad-Eintrag erweitern. Koordination mit dem für `project.godot` zuständigen Stream erfolgt über ein GitHub Issue mit Label `project-godot`.
 
 **Zu erstellende Dateien:**
 ```
