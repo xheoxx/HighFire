@@ -1190,3 +1190,18 @@ const COMBOS = {
 - Bei Abhängigkeitskonflikten: Stream blockiert sich selbst (`⚠ BLOCKIERT` in dieser Datei) und erstellt GitHub Issue mit Label `blocked`
 - Stream als `✅ ABGESCHLOSSEN` markieren wenn alle Akzeptanzkriterien erfüllt sind
 - Pull Request pro abgeschlossenem Stream – kein direkter Push auf `main`
+
+---
+
+## Post-Launch-Optionen (nach Steam-Release)
+
+### Nintendo Switch Port
+**Status**: Nicht geplant für v1.0 – Post-Launch-Evaluation nach erfolgreichem Steam-Launch.
+
+**Voraussetzungen** (vollständige Details in `DESIGN.md` → Controller-Abschnitt):
+- Nintendo Developer Account (Bewerbung, 1–6 Monate Wartezeit)
+- Godot Switch Export Template via lizenziertem Partner (~2.000–5.000 €)
+- Nintendo Devkit (~500 €/Jahr Leihgebühr)
+- Nintendo Lotcheck-Prozess (4–8 Wochen)
+
+**Hinweis**: Switch Pro Controller auf PC/Steam ist bereits vollständig unterstützt (kein Implementierungsaufwand). Switch-Spieler können ab Tag 1 mit ihrem vertrauten Controller spielen.

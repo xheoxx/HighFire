@@ -478,6 +478,26 @@ Die konkreten Combo-Definitionen pro Modus werden in Phase 2 (Stream A – Motio
   - Nintendo Switch Pro → SNES-Notation beibehalten
   - Unbekannt / Tastatur → Tasten-Buchstaben anzeigen
 
+### Nintendo Switch – Controller & Plattform
+
+#### Switch Pro Controller auf PC/Steam (unterstützt, kein Mehraufwand)
+Der Switch Pro Controller wird von Godot via SDL2 als Standard-HID-Gamepad erkannt und funktioniert auf PC/Steam ohne zusätzliche Implementierung. Button-Layout ist nahezu identisch zum SNES-Layout (A/B/X/Y, D-Pad, L/R, ZL/ZR). ZL/ZR werden auf L/R gemappt – alle Spielfunktionen vollständig nutzbar.
+
+Joy-Cons im Paar-Modus funktionieren ebenfalls, sind aber wegen der aufgeteilten Ergonomie für dieses Spiel nicht empfohlen.
+
+#### Switch als Ziel-Plattform (Post-Launch-Option)
+Ein nativer Switch-Release ist technisch möglich, aber deutlich aufwendiger als ein weiterer Export-Button:
+
+| Voraussetzung | Details | Aufwand |
+|--------------|---------|---------|
+| **Nintendo Developer Account** | Bewerbung erforderlich, Genehmigung nicht garantiert, Wartezeit 1–6 Monate | Extern, kostenlos |
+| **Godot Switch Export Template** | Nicht öffentlich – nur über lizenzierte Partner (z.B. Pineapple Works, OKAM Studio) | ~2.000–5.000 € einmalig |
+| **Nintendo Devkit** | Pflicht zum Testen, Leihgebühr ~500 €/Jahr | Nur mit aktivem Dev-Account |
+| **Nintendo Lotcheck** | Pflichtprüfung vor Release, strenge Anforderungen | 4–8 Wochen Zeitaufwand |
+| **Separater eShop-Release** | Kein Steam – eigene Store-Seite, eigenes Pricing | Eigenständiges Projekt |
+
+> **Strategie**: Steam-First (Windows + Linux). Switch-Port erst nach erfolgreichem Steam-Launch evaluieren, wenn Budget und Ressourcen vorhanden. Der Switch Pro Controller auf PC ist bereits vollständig unterstützt – das gibt Switch-Spielern sofort ein vertrautes Erlebnis ohne Portierungsaufwand.
+
 ---
 
 ## Spellcrafting-System
@@ -1347,6 +1367,43 @@ Alle Layer starten synchron auf demselben Grid (85 BPM Grundraster). Die DnB-Per
 - Grundraster: **85 BPM** (Melodie/Gitarre), DnB-Percussion intern auf **170 BPM**
 - Initiale Musik via Godot `AudioStreamOggVorbis`; OGG-Dateien müssen Loop-Punkte auf Beat-Grenzen gesetzt haben
 - Audio-Bus „Music" in `project.godot` anlegen (getrennt von SFX-Bus)
+
+### Musik-Produktions-Workflow (KI-gestützt)
+
+Da kein dedizierter Komponist im Team ist, wird der Soundtrack mit KI-Werkzeugen erstellt, die **MIDI** als Ausgabe liefern. MIDI ist deterministisch, instrument-agnostisch und vollständig editierbar – im Gegensatz zu reinen Audio-Generatoren (Suno, Udio).
+
+#### Empfohlene Tools
+
+| Tool | Typ | MIDI-Export | Kosten | Einsatz im Projekt |
+|------|-----|-------------|--------|-------------------|
+| **AIVA** (aiva.ai) | Web-KI-Komponist | ✅ direkt | ~33 €/Mo | Haupt-Themes: Arena-Loop, Boss-Intensität, Menü-Theme |
+| **Magenta** (Google, OSS) | Lokal, Python | ✅ direkt | Kostenlos | Loop-Variationen, Rhythmus-Experimente, DnB-Percussion-Muster |
+| **Basic Pitch** (Spotify, OSS) | Audio→MIDI | ✅ Konvertierung | Kostenlos | Falls Audio-Referenzen in MIDI überführt werden sollen |
+
+#### Workflow Schritt für Schritt
+
+1. **Komposition in AIVA**: Stil „Cinematic + Electronic" wählen, BPM auf 85 setzen, Dark-Fantasy-Mood. MIDI exportieren.
+2. **Instrument-Zuordnung in DAW** (LMMS kostenlos, oder Reaper): MIDI-Spuren laden, Instrumente auf Power-Metal-Gitarre, DnB-Percussion, Synth-Bass, Synth-Pad mappen.
+3. **Feinschliff**: Loop-Punkte auf Beat-Grenzen setzen (exakt auf 85-BPM-Raster).
+4. **Export als OGG**: Pro Layer eine separate OGG-Datei exportieren (Basis, Combat, Intensity, Finale, Stinger, Menü).
+5. **Import in Godot**: OGG-Dateien unter `/audio/music/` ablegen, Loop-Flags in der Import-Einstellung aktivieren.
+
+#### Magenta lokal (für DnB-Percussion)
+```bash
+pip install magenta
+# PerformanceRNN für aggressive Percussion-Patterns bei 170 BPM
+```
+Magenta-Output ist roh – immer manuell in der DAW nachbearbeiten, bevor es in den MIDI-Pool geht.
+
+#### Datei-Konvention für Musik-Assets
+```
+/audio/music/layer_base.ogg          → Basis-Loop (immer aktiv)
+/audio/music/layer_combat.ogg        → Combat-Layer
+/audio/music/layer_intensity.ogg     → Intensity-Layer (HP < 30%)
+/audio/music/layer_finale.ogg        → Finale-Layer (2 Spieler)
+/audio/music/stinger_round_end.ogg   → Round-End-Stinger
+/audio/music/menu_theme.ogg          → Hauptmenü-Theme
+```
 
 ---
 
