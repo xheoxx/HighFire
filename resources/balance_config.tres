@@ -1,0 +1,86 @@
+[gd_resource type="Resource" script_class="" load_steps=1 format=3]
+
+; =============================================================================
+; balance_config.tres
+; Zweck: Alle Balance-Werte des Spiels zentral gespeichert.
+;        Kein Wert wird im Code als const hardcodiert – alle Systeme lesen
+;        von hier. Data-Mods koennen diese Werte ueberschreiben.
+; Geladen von: mod_loader.gd (als erstes AutoLoad), player.gd, damage_system.gd
+; =============================================================================
+
+[resource]
+
+; --- Basis-Spielerwerte (lt. DESIGN.md: Balance-Parameter) ---
+
+; HP des Spielers beim Start einer Runde.
+player_max_hp = 100
+
+; Normale Bewegungsgeschwindigkeit in Pixeln pro Sekunde.
+player_speed = 250.0
+
+; Geschwindigkeit waehrend eines Dodge-Manoevers (px/s).
+; Hoeher als normale Speed um klares visuelles Feedback zu erzeugen.
+player_dodge_speed = 600.0
+
+; Wie lange der Dodge-Schub aktiv ist (Sekunden).
+; Unveraenderbar per Design – aendert das Dodge-Gefuehl zu stark.
+player_dodge_duration = 0.2
+
+; Wie lange nach einem Dodge gewartet werden muss (Sekunden).
+player_dodge_cooldown = 0.8
+
+; --- Schadensklassen (lt. DESIGN.md: Schadensklassen) ---
+
+; Leichter Angriff: schneller Nahkampftreffer, wenig Schaden.
+damage_light_min = 8
+damage_light_max = 12
+
+; Mittlerer Angriff: Standard-Spell, ausgewogenes Verhaltnis.
+damage_medium_min = 18
+damage_medium_max = 25
+
+; Schwerer Angriff: Combo-Finale oder Vollkreis-Spell – hohe Gefahr.
+damage_heavy_min = 35
+damage_heavy_max = 50
+
+; --- Cooldowns (lt. DESIGN.md: Cooldowns) ---
+
+; Zeit zwischen zwei leichten Angriffen (Sekunden).
+cooldown_attack_light = 0.15
+
+; Zeit zwischen zwei schweren Angriffen (Sekunden).
+cooldown_attack_heavy = 0.6
+
+; Cooldown fuer das Oeffnen des Waffen-Panels (Debounce-Schutz).
+cooldown_crafting_open = 0.5
+
+; Mindestzeit zwischen zwei Zielwechseln (Sekunden).
+cooldown_target_switch = 0.2
+
+; --- Respawn-Konfiguration ---
+
+; Anzahl Leben im Leben-Modus (0 = kein Respawn / Last Man Standing).
+lives_count = 0
+
+; Unverwundbarkeit nach Respawn (Sekunden). Nur relevant wenn lives_count > 0.
+respawn_invincibility_duration = 1.5
+
+; Wartezeit vor Respawn (Sekunden). Nur relevant wenn lives_count > 0.
+respawn_delay = 3.0
+
+; --- L/R-Input-Timing (lt. DESIGN.md: L/R-Input-System) ---
+
+; Schwelle in Millisekunden: unter dieser Dauer gilt ein L/R-Druck als "Tippen".
+; Tippen = Target-Management; Halten = Combo-Modus.
+lr_tap_threshold_ms = 200
+
+; --- Combo-Zeitfenster ---
+
+; Maximale Zeit in Sekunden fuer eine vollstaendige Combo-Eingabe (Modus L/R).
+combo_window_lr = 0.4
+
+; Maximale Zeit fuer Modus-B-Combos (laengere Gesten brauchen mehr Zeit).
+combo_window_b = 0.6
+
+; Zeitfenster fuer Perfect-Timing-Bonus (Geste komplett in dieser Zeit = Bonus).
+combo_perfect_window = 0.15
