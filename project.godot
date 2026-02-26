@@ -11,18 +11,12 @@ config_version=5
 [application]
 
 config/name="HighFire"
+run/main_scene="res://scenes/main_arena.tscn"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 
-; Haupt-Szene wird in Phase 3 auf main_menu.tscn gesetzt.
-; Bis dahin startet das Spiel ohne Default-Scene (Godot zeigt leeres Fenster).
-
 [autoload]
 
-; WICHTIG: Reihenfolge ist entscheidend!
-; ModLoader MUSS als erster AutoLoad registriert sein – er scannt user://mods/
-; und merged Data-Mods bevor die anderen AutoLoads ihre Resources laden.
-; Alle weiteren AutoLoads dürfen erst nach mod_loading_complete starten.
 ModLoader="*res://scripts/mod_loader.gd"
 ArenaStateManager="*res://scripts/arena_state_manager.gd"
 DamageSystem="*res://scripts/damage_system.gd"
@@ -31,31 +25,11 @@ SfxManager="*res://scripts/sfx_manager.gd"
 
 [display]
 
-; Viewport 1920x1080 (Full-HD). canvas_items = pixelgenaues Scaling ohne Blur.
-; Wird bei Split-Screen durch SubViewports ergänzt (Phase 3 Stream B).
 window/size/viewport_width=1920
 window/size/viewport_height=1080
 window/stretch/mode="canvas_items"
-window/stretch/aspect="keep"
 
 [input]
-
-; =============================================================================
-; INPUT-ACTIONS – ALLE 4 SPIELER
-; =============================================================================
-; Namens-Konvention: p{N}_{action} – z.B. p1_move_up, p3_action_dodge
-; P1 + P2 haben zusätzlich Tastatur-Bindings (Fallback lt. DESIGN.md).
-; Alle 4 Spieler nutzen Joypad-Bindings auf Geräten 0–3.
-;
-; L/R-TIPPEN vs. HALTEN: Die Unterscheidung < 200ms (Tippen) vs. >= 200ms
-; (Halten) wird im Code implementiert (Phase 2 Stream A, motion_input_parser.gd).
-; Hier werden BEIDE Action-Sets definiert (target_* UND combo_mode_*),
-; damit InputMap die Namen kennt – sie teilen sich dieselben physischen Tasten.
-; =============================================================================
-
-; --- SPIELER 1 ---
-; Tastatur: WASD + J/K/I/U/Q/E/Esc/Tab
-; Joypad: Gerät 0
 
 p1_move_up={
 "deadzone": 0.5,
@@ -109,7 +83,6 @@ p1_action_special={
 , Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":2,"pressure":0.0,"pressed":false,"script":null)
 ]
 }
-; L-Taste P1: Tastatur Q, Joypad LB (button_index 9)
 p1_combo_mode_l={
 "deadzone": 0.5,
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":81,"key_label":0,"unicode":113,"location":0,"echo":false,"script":null)
@@ -122,7 +95,6 @@ p1_target_prev={
 , Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":9,"pressure":0.0,"pressed":false,"script":null)
 ]
 }
-; R-Taste P1: Tastatur E, Joypad RB (button_index 10)
 p1_combo_mode_r={
 "deadzone": 0.5,
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":69,"key_label":0,"unicode":101,"location":0,"echo":false,"script":null)
@@ -135,7 +107,6 @@ p1_target_next={
 , Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":10,"pressure":0.0,"pressed":false,"script":null)
 ]
 }
-; L+R gleichzeitig = target_lock UND combo_mode_b (beide teilen L+R)
 p1_target_lock={
 "deadzone": 0.5,
 "events": [Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":9,"pressure":0.0,"pressed":false,"script":null)
@@ -158,7 +129,6 @@ p1_menu_info={
 , Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":4,"pressure":0.0,"pressed":false,"script":null)
 ]
 }
-; Analogstick rechts (Ziel manuell steuern)
 p1_aim_x={
 "deadzone": 0.3,
 "events": [Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":0,"axis":2,"axis_value":1.0,"script":null)
@@ -169,7 +139,6 @@ p1_aim_y={
 "events": [Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":0,"axis":3,"axis_value":1.0,"script":null)
 ]
 }
-; Analog-Modifier: L2/LT und R2/RT
 p1_modifier_left={
 "deadzone": 0.5,
 "events": [Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":0,"axis":4,"axis_value":1.0,"script":null)
@@ -180,11 +149,6 @@ p1_modifier_right={
 "events": [Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":0,"axis":5,"axis_value":1.0,"script":null)
 ]
 }
-
-; --- SPIELER 2 ---
-; Tastatur: Pfeiltasten + Num1/2/4/5/7/9/0/Num.
-; Joypad: Gerät 1
-
 p2_move_up={
 "deadzone": 0.5,
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":4194320,"physical_keycode":4194320,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
@@ -303,10 +267,6 @@ p2_modifier_right={
 "events": [Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":1,"axis":5,"axis_value":1.0,"script":null)
 ]
 }
-
-; --- SPIELER 3 ---
-; Nur Joypad: Gerät 2 (kein Tastatur-Fallback für P3/P4)
-
 p3_move_up={
 "deadzone": 0.5,
 "events": [Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":2,"button_index":12,"pressure":0.0,"pressed":false,"script":null)
@@ -411,10 +371,6 @@ p3_modifier_right={
 "events": [Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":2,"axis":5,"axis_value":1.0,"script":null)
 ]
 }
-
-; --- SPIELER 4 ---
-; Nur Joypad: Gerät 3 (kein Tastatur-Fallback für P3/P4)
-
 p4_move_up={
 "deadzone": 0.5,
 "events": [Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":3,"button_index":12,"pressure":0.0,"pressed":false,"script":null)
@@ -522,12 +478,6 @@ p4_modifier_right={
 
 [layer_names]
 
-; Physics-Layer-Namen lt. DESIGN.md
-; Layer 1: Spieler-Collider (CharacterBody2D)
-; Layer 2: Terrain (Tiles, destruktibel)
-; Layer 3: Projektile (Spells, Pfeile)
-; Layer 4: Arena-Wände (statisch, nie zerstörbar)
-; Layer 5: Raycast-Only (LOS-Prüfung, unsichtbar für Spieler)
 2d_physics/layer_1="Spieler"
 2d_physics/layer_2="Terrain"
 2d_physics/layer_3="Projektile"
@@ -536,6 +486,4 @@ p4_modifier_right={
 
 [rendering]
 
-; Hintergrundfarbe: dunkles Obsidian passend zum Moodboard 01 (Arcane Foundry).
-; Wird sichtbar wenn keine Szene den Hintergrund abdeckt.
 environment/default_clear_color=Color(0.027, 0.027, 0.067, 1)

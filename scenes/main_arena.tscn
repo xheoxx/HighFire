@@ -1,6 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://main_arena"]
+[gd_scene load_steps=6 format=3 uid="uid://main_arena"]
 
 [ext_resource type="Script" path="res://scripts/main_arena.gd" id="1_maingd"]
+[ext_resource type="Script" path="res://scripts/arena_grid.gd" id="2_arenagrid"]
+[ext_resource type="PackedScene" uid="uid://tile_tscn" path="res://scenes/tile.tscn" id="3_tile"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="4_player"]
 
 ; =============================================================================
 ; main_arena.tscn – Haupt-Spielszene
@@ -139,30 +142,23 @@ offset_right = 16.0
 offset_bottom = 512.0
 color = Color(0.15, 0.15, 0.25, 1.0)
 
-; --- Arena-Grid-Platzhalter ---
-; Wird in Phase 1 Stream D durch arena_grid.gd ersetzt der 32x32 Tiles
-; instanziiert. Dieser Node ist bereits als ArenaGrid benannt damit main_arena.gd
-; ihn via $ArenaGrid finden kann.
+; --- Arena-Grid ---
+; arena_grid.gd generiert 32x32 Tiles beim _ready() und verwaltet deren Zustaende.
+; tile.tscn wird als PackedScene uebergeben (tile_scene Export).
 [node name="ArenaGrid" type="Node2D" parent="."]
+script = ExtResource("2_arenagrid")
+tile_scene = ExtResource("3_tile")
 
-; --- Spieler-Platzhalter ---
-; Werden in Phase 1 Stream B durch echte player.tscn-Instanzen ersetzt.
-; Vorab als sichtbare ColorRect-Platzhalter damit die Szene ladbar ist.
-[node name="Player1Placeholder" type="ColorRect" parent="."]
-offset_left = -24.0
-offset_top = -24.0
-offset_right = 24.0
-offset_bottom = 24.0
+; --- Spieler ---
+; Zwei player.tscn-Instanzen mit player_id 0 und 1 (Cyan + Magenta).
+; Spawn-Positionen entsprechen Arena-Config (Default-Arena).
+[node name="Player1" parent="." instance=ExtResource("4_player")]
 position = Vector2(-200, 0)
-color = Color(0.0, 0.831, 1.0, 1.0)
+player_id = 0
 
-[node name="Player2Placeholder" type="ColorRect" parent="."]
-offset_left = -24.0
-offset_top = -24.0
-offset_right = 24.0
-offset_bottom = 24.0
+[node name="Player2" parent="." instance=ExtResource("4_player")]
 position = Vector2(200, 0)
-color = Color(1.0, 0.0, 0.502, 1.0)
+player_id = 1
 
 ; --- HUD-Layer ---
 ; CanvasLayer bleibt immer im Vordergrund, unabhaengig von Kamera-Zoom und -Position.

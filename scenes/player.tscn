@@ -1,4 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://player_tscn"]
+[gd_scene load_steps=3 format=3 uid="uid://player_tscn"]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_playergd"]
 
 ; =============================================================================
 ; player.tscn – Spieler-Prefab
@@ -20,6 +22,7 @@ radius = 10.0
 height = 32.0
 
 [node name="Player" type="CharacterBody2D"]
+script = ExtResource("1_playergd")
 ; Physics-Layer 1 (Spieler) und Kollision mit Layer 2 (Terrain) + Layer 4 (Waende)
 ; Layer 3 (Projektile) wird extra behandelt: Spieler sind Ziel, nicht Hindernis
 collision_layer = 1

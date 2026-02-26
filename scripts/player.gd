@@ -140,7 +140,7 @@ func _ready() -> void:
 	_apply_sprite_mode()
 
 	# Spieler zur Gruppe hinzufuegen – fuer einfachen Zugriff von anderen Nodes
-	add_to_group("players")
+	add_to_group("player")
 
 # _physics_process(delta) laeuft jeden Physik-Frame (60 fps Standard in Godot).
 # Hier wird Bewegung und Dodge berechnet.

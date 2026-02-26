@@ -41,6 +41,14 @@ const TILE_SIZE: int = 32
 const TILE_SCENE_PATH: String = "res://scenes/tile.tscn"
 
 # =============================================================================
+# EXPORTS
+# =============================================================================
+
+# Optional: Tile-Szene kann via Editor/Instanz gesetzt werden (statt hardcoded TILE_SCENE_PATH).
+# Wenn nicht gesetzt, wird automatisch TILE_SCENE_PATH geladen.
+@export var tile_scene: PackedScene = null
+
+# =============================================================================
 # INTERNE ZUSTAENDE
 # =============================================================================
 
@@ -58,8 +66,12 @@ var _tile_scene: PackedScene
 # _ready() wird aufgerufen wenn der Node in den SceneTree eingehaengt wurde.
 # Hier wird das gesamte Grid aufgebaut.
 func _ready() -> void:
-	# Tile-Szene vorladen – einmal beim Start, nicht bei jedem Tile
-	_tile_scene = load(TILE_SCENE_PATH)
+	# Tile-Szene vorladen – wenn über @export gesetzt, das nutzen, sonst TILE_SCENE_PATH laden
+	if tile_scene:
+		_tile_scene = tile_scene
+	else:
+		_tile_scene = load(TILE_SCENE_PATH)
+	
 	if not _tile_scene:
 		push_error("ArenaGrid: Tile-Szene nicht gefunden unter " + TILE_SCENE_PATH)
 		return
