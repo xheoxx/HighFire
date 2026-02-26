@@ -1,0 +1,42 @@
+[gd_scene load_steps=2 format=3 uid="uid://target_indicator_tscn"]
+
+[ext_resource type="Script" path="res://scripts/target_indicator.gd" id="target_indicator_script"]
+
+; =============================================================================
+; target_indicator.tscn – HUD-Ring der um das gelockte Ziel erscheint
+;
+; Root: Node2D (mit target_indicator.gd)
+;   ├── Ring (Line2D)          – Kreis aus 32 Punkten, Farbe = Angreifer-Primärfarbe
+;   └── AnimationPlayer        – Referenz vorhanden (Pulsierung laeuft via _process in Script)
+;
+; Platzierung: In der Welt (nicht auf dem HUD-Canvas).
+;              target_system.gd setzt global_position = Ziel.global_position jeden Frame.
+;
+; Farb-API: set_color(color) auf dem Root-Node setzt Ring-Farbe.
+;           Aufgerufen von target_system.gd wenn Ziel gesetzt wird.
+;           Farbe = Farbe des Angreifers (lt. DESIGN.md: HUD-Ring zeigt Angreifer-Farbe).
+;
+; Koordinatensystem: (0,0) = Mittelpunkt des Ziel-Spielers.
+;                    Radius 20px (Platzhalter in TSCN – wird in _ready() neu gesetzt).
+; =============================================================================
+
+[node name="TargetIndicator" type="Node2D"]
+script = ExtResource("target_indicator_script")
+
+; --- Ring aus 32 Punkten (Kreis approximiert via Sinus/Kosinus in _ready()) ---
+; Radius 20px: genug Abstand um den Spieler aber nicht zu gross fuer Arena-Uebersicht.
+; 32 Punkte reichen fuer glatte Darstellung ohne Overhead (lt. PLAN_PHASES.md Fallstricke).
+; Punkte werden via target_indicator.gd._ready()._build_ring() neu gesetzt.
+[node name="Ring" type="Line2D" parent="."]
+points = PackedVector2Array(20, 0, 20, 0)
+width = 2.5
+; Standard-Farbe Cyan (#00D4FF = Spieler-1-Farbe) – wird via set_color() ueberschrieben
+default_color = Color(0.0, 0.831, 1.0, 1.0)
+; Joint-Mode ROUND (2) fuer glatte Ecken am Ring
+joint_mode = 2
+begin_cap_mode = 1
+end_cap_mode = 1
+
+; --- AnimationPlayer (Referenz fuer moegliche spätere Animationen) ---
+; Pulsierung laeuft derzeit direkt in target_indicator.gd._process() via Sinus-Funktion.
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
