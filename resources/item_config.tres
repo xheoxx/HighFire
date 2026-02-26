@@ -1,0 +1,141 @@
+[gd_resource type="Resource" script_class="" load_steps=1 format=3]
+
+; =============================================================================
+; item_config.tres
+; Zweck: Alle Item-Parameter: Drop-Chance, Gewichtungstabelle der 8 Item-Typen,
+;        Effektwerte und Farbkodierung fuer das HUD.
+;        Geladen von: item_system.gd (Phase 2B), item_pickup.gd (Phase 2B)
+;        Koordiniert mit: tile.gd (Drop-Trigger bei DESTROYED), damage_system.gd
+; =============================================================================
+
+[resource]
+
+; --- Drop-Mechanik ---
+; Basiswahrscheinlichkeit dass ein zerstoertes Tile ein Item droppt (0.0–1.0).
+; 0.15 = 15% Drop-Chance lt. DESIGN.md Item-System.
+; Anpassbar ohne Code-Aenderung.
+item_drop_chance = 0.15
+
+; --- Gewichtungstabelle der Item-Typen ---
+; Jeder Eintrag entspricht einem Item (gleiche Reihenfolge wie item_ids).
+; Hoehere Zahl = haeufiger. Summe muss nicht 100 ergeben – werden normalisiert.
+; Reihenfolge: shield_shard, ember_core, frost_vein, speed_rune,
+;              life_shard, dodge_crystal, overcharge, terrain_anchor
+item_weights = Array[int]([15, 12, 12, 14, 15, 12, 10, 10])
+
+; --- Item-IDs (Reihenfolge muss mit item_weights uebereinstimmen) ---
+; Wird von item_system.gd genutzt um per Zufallsindex das Item zu bestimmen.
+item_ids = Array[String](["shield_shard", "ember_core", "frost_vein", "speed_rune", "life_shard", "dodge_crystal", "overcharge", "terrain_anchor"])
+
+; ============================================================
+; PASSIVE ITEMS (wirken dauerhaft solange im Besitz)
+; ============================================================
+
+; --- shield_shard: Splitter-Schild ---
+; Reduziert den naechsten eingehenden Schaden um 50% (einmalig, danach verbraucht).
+; Einmalige Anwendung – passiv, kein Trigger noetig.
+shield_shard_damage_reduction = 0.5
+
+; --- ember_core: Glut-Kern ---
+; Alle Treffer des Traeger-Spielers hinterlassen Brennen (1 Stack) auf dem Ziel.
+; Dauer des Brennen-Priming-Effekts in Sekunden.
+ember_core_burn_duration = 5.0
+
+; Anzahl der Brennen-Stacks die pro Treffer hinzugefuegt werden.
+ember_core_burn_stacks = 1
+
+; --- frost_vein: Frost-Ader ---
+; Alle Treffer hinterlassen Nass-Statuseffekt auf dem Ziel (Reaktionsprimer fuer Blitz).
+; Dauer des Nass-Effekts in Sekunden.
+frost_vein_wet_duration = 5.0
+
+; --- speed_rune: Tempo-Rune ---
+; Erhoeht die Bewegungsgeschwindigkeit des Traeger-Spielers temporaer.
+; Multiplikator: 1.20 = +20% Geschwindigkeit (lt. DESIGN.md Item-System).
+speed_rune_speed_multiplier = 1.20
+
+; Wie lange der Geschwindigkeitsbonus aktiv ist (in Sekunden), dann Item verbraucht.
+speed_rune_duration = 8.0
+
+; --- terrain_anchor: Terrain-Anker ---
+; Spieler faellt nicht durch zerstoerte Tiles (schwebt ueber Luecken) fuer begrenzte Zeit.
+; Dauer in Sekunden – nach Ablauf wirkt Gravitation wieder normal.
+terrain_anchor_duration = 6.0
+
+; ============================================================
+; BEDINGTE ITEMS (aktivieren sich automatisch bei Trigger)
+; ============================================================
+
+; --- life_shard: Leben-Splitter ---
+; Heilt automatisch wenn HP unter den konfigurierten Schwellwert fallen.
+; Schwellwert als Anteil der maximalen HP (0.0–1.0). 0.30 = 30% lt. DESIGN.md.
+life_shard_hp_threshold = 0.30
+
+; Heilungsmenge in HP-Punkten (einmalige Heilung bei Triggerbedingung).
+life_shard_heal_amount = 25
+
+; --- dodge_crystal: Ausweich-Kristall ---
+; Loest automatisch einen Dodge aus wenn ein feindliches Projektil zu nah kommt.
+; Trigger-Radius in Pixeln. 80px lt. DESIGN.md.
+dodge_crystal_proximity_px = 80.0
+
+; --- overcharge: Ueberladung ---
+; Naechster Spell nach Aufsammeln verursacht doppelten Schaden.
+; Schadens-Multiplikator fuer den naechsten Spell-Cast.
+overcharge_damage_multiplier = 2.0
+
+; Zeit in Sekunden nach der das Item verfaellt wenn kein Spell gecastet wurde.
+; 10s lt. DESIGN.md – danach ist das Item verbraucht ohne Effekt.
+overcharge_expire_time = 10.0
+
+; ============================================================
+; HUD-FARBKODIERUNG (Item-Leiste Hintergrundfarben nach Kategorie)
+; ============================================================
+; Farben lt. DESIGN.md Item-System Farbpalette.
+; Genutzt von item_bar_ui.gd fuer den ColorRect-Hintergrund jedes Item-Slots.
+
+; Schutz-Kategorie: shield_shard, terrain_anchor
+color_protection = "#1A3A5C"
+
+; Angriff-Kategorie: ember_core, overcharge
+color_attack = "#5C1A1A"
+
+; Reaktion-Kategorie: frost_vein
+color_reaction = "#1A4A5C"
+
+; Bewegung-Kategorie: speed_rune
+color_movement = "#3A4A1A"
+
+; Ueberleben-Kategorie: life_shard, dodge_crystal
+color_survival = "#3A1A5C"
+
+; Mapping: welches Item gehoert zu welcher Kategorie-Farb-ID.
+; Reihenfolge entspricht item_ids – Werte sind Kategorie-Keys fuer Farb-Lookup.
+item_categories = Array[String](["protection", "attack", "reaction", "movement", "survival", "survival", "attack", "protection"])
+
+; ============================================================
+; VISUELLE PARAMETER (Item-Node auf dem Boden)
+; ============================================================
+
+; Dauer der Einblend-Animation wenn ein Item auf den Boden faellt (Tween, in Sekunden).
+pickup_appear_duration = 0.3
+
+; Dauer der Ausblend-Animation wenn ein Item aufgesammelt wird (in Sekunden).
+pickup_collect_duration = 0.2
+
+; Dauer des Flash-Tweens in der Item-Leiste wenn ein neues Item aufgesammelt wird.
+hud_flash_duration = 0.25
+
+; Dauer des Ausgrau-Tweens wenn ein Item verbraucht wird und aus der Leiste verschwindet.
+hud_consumed_fade_duration = 0.5
+
+; Groesse des Item-ColorRects auf dem Boden (in Pixeln, quadratisch).
+pickup_node_size = 16
+
+; ============================================================
+; SLOT-BEGRENZUNG (Post-Testphase konfigurierbar)
+; ============================================================
+; 0 = keine Begrenzung (Testphase-Standard lt. DESIGN.md).
+; Nach der Testphase kann dieser Wert auf z.B. 4 gesetzt werden.
+; item_system.gd prueft diesen Wert vor jedem Aufsammeln.
+max_items_per_player = 0
