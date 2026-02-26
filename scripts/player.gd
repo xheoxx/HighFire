@@ -175,7 +175,7 @@ func _physics_process(delta: float) -> void:
 
 	# --- Dodge-Trigger pruefen ---
 	# is_action_just_pressed: nur im Frame des ersten Drueckens true (kein Dauerfeuer)
-	if _input.is_action_just_pressed("dodge") and not _dodge_on_cooldown:
+	if _input.is_action_just_pressed("action_dodge") and not _dodge_on_cooldown:
 		_start_dodge()
 
 # =============================================================================
@@ -266,7 +266,7 @@ func _apply_player_color() -> void:
 	if not _player_data:
 		return
 
-	var colors: Array = _player_data.get("player_primary_colors")
+	var colors = _player_data.get("player_primary_colors")
 	if not colors or player_id >= colors.size():
 		return
 

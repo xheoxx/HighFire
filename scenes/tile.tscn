@@ -1,4 +1,6 @@
-[gd_scene load_steps=1 format=3 uid="uid://tile_tscn"]
+[gd_scene load_steps=2 format=3 uid="uid://tile_tscn"]
+
+[ext_resource type="Script" path="res://scripts/tile.gd" id="1_tilegd"]
 
 ; =============================================================================
 ; tile.tscn – Einzelner Arena-Tile
@@ -19,6 +21,7 @@
 size = Vector2(30.0, 30.0)
 
 [node name="Tile" type="StaticBody2D"]
+script = ExtResource("1_tilegd")
 ; Physics-Layer 2 (Terrain) – Spieler und Projektile koennen dagegen kollidieren
 collision_layer = 2
 collision_mask = 0
