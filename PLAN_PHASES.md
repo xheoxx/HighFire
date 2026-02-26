@@ -175,7 +175,10 @@ Design-Ergänzungen und -Korrekturen die nach Abschluss von Phase 0 entstehen. L
 
 ---
 
-#### Stream B – Player Movement
+#### Stream B – Player Movement ✅ ABGESCHLOSSEN
+**Branch**: `phase1/stream-b-player` – bereit für PR
+**Abgeschlossene Dateien**: `scripts/player.gd`, `scripts/player_input.gd`, `resources/player_data.tres`
+
 **Abhängigkeit**: Stream A muss abgeschlossen sein.
 
 **Zu erstellende Dateien:**
@@ -249,7 +252,10 @@ Design-Ergänzungen und -Korrekturen die nach Abschluss von Phase 0 entstehen. L
 
 ---
 
-#### Stream D – Terrain Base
+#### Stream D – Terrain Base ✅ ABGESCHLOSSEN
+**Branch**: `phase1/stream-d-terrain` – bereit für PR
+**Abgeschlossene Dateien**: `scripts/tile.gd`, `scripts/arena_grid.gd` (tile_config.tres liegt auf stream-f)
+
 **Abhängigkeit**: Stream A muss abgeschlossen sein (unabhängig von B und C).
 
 **Zu erstellende Dateien:**
