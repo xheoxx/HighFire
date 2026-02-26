@@ -1,0 +1,92 @@
+[gd_resource type="Resource" script_class="" load_steps=1 format=3]
+
+; =============================================================================
+; arena_config.tres
+; Zweck: Spawn-Positionen, Arena-Groesse und arenenspezifische
+;        Tile-Verteilungen fuer alle 4 Arena-Varianten.
+;        arena_grid.gd und player_spawner.gd lesen aus dieser Resource.
+; Geladen von: arena_grid.gd (Phase 1D), player_spawner.gd (Phase 3B)
+; =============================================================================
+
+[resource]
+
+; --- Arena-Grid-Groesse (gilt fuer alle Arenen) ---
+; Arena ist quadratisch: grid_width x grid_height Tiles
+grid_width = 32
+grid_height = 32
+
+; Tile-Groesse in Pixeln (Tile ist quadratisch)
+tile_size = 30
+
+; Koordinaten-Ursprung: Welt-Position der linken oberen Ecke des Grids.
+; Bei einem 32x32 Grid mit 30px Tile: 960px = halbe Grid-Breite
+; -> Grid zentriert um (0,0): Von (-480,-480) bis (+480,+480)
+grid_origin_x = -480
+grid_origin_y = -480
+
+; --- Spawn-Positionen (4 Ecken, mit Abstand vom Rand) ---
+; Positionen in Welt-Koordinaten, relativ zur Arena-Mitte (0,0).
+; Abstand vom Rand: ca. 4 Tiles einwaerts (4 * 30 = 120px)
+spawn_positions = [
+	Vector2(-360, -360),
+	Vector2( 360, -360),
+	Vector2(-360,  360),
+	Vector2( 360,  360)
+]
+
+; Spieler-Indizes zu Spawn-Positionen: P1=0, P2=1, P3=2, P4=3
+spawn_player_order = [0, 1, 2, 3]
+
+; --- Arenen-Definitionen ---
+; Jede Arena definiert: Tile-Verteilung (solid/breakable-Verhaltnis),
+; spezifische Tile-Muster, Name und Beschreibung.
+
+arenas = {
+	; --- Arena 1: Crucible (Standard, symmetrisch) ---
+	"crucible": {
+		"display_name": "Das Schmelzfeuer",
+		"breakable_tile_ratio": 0.7,
+		"solid_border_width": 2,
+		"spawn_positions_override": [],
+		"description": "Symmetrische Standard-Arena. 70% der Tiles sind zerstoerbar."
+	},
+
+	; --- Arena 2: Rift Canyon (mehr feste Tile-Bloecke) ---
+	"rift_canyon": {
+		"display_name": "Rift-Schlucht",
+		"breakable_tile_ratio": 0.5,
+		"solid_border_width": 2,
+		"spawn_positions_override": [],
+		"description": "Kanyon-Layout mit vertikalen Trennwaenden aus festen Tiles."
+	},
+
+	; --- Arena 3: Collapsed (stark zerstoert, wenig feste Flaeche) ---
+	"collapsed": {
+		"display_name": "Truemmerfeld",
+		"breakable_tile_ratio": 0.85,
+		"solid_border_width": 1,
+		"spawn_positions_override": [],
+		"description": "Fast alles kann zerstoert werden. Sehr dynamisch."
+	},
+
+	; --- Arena 4: Void Ring (Ring-Form, Mitte leer) ---
+	"void_ring": {
+		"display_name": "Void-Ring",
+		"breakable_tile_ratio": 0.6,
+		"solid_border_width": 2,
+		"spawn_positions_override": [],
+		"description": "Ring-Arena: Mitte ist immer Loch (Out-of-Bounds)."
+	}
+}
+
+; --- Standard-Arena beim ersten Start ---
+default_arena = "crucible"
+
+; --- Out-of-Bounds-Verhalten ---
+; Zeit in Sekunden bis ein Spieler auf einem Loch stirbt.
+; 0.0 = sofortiger Tod auf zerstoertem Tile.
+oob_kill_delay = 0.5
+
+; Schaden pro Sekunde wenn Spieler ausserhalb der Arena-Grenzen ist.
+; (Sicherheitsnetz falls Spieler durch Wall-Bug die Arena verlaesst)
+oob_damage_per_second = 20.0
