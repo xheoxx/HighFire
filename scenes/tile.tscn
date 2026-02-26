@@ -1,0 +1,66 @@
+[gd_scene load_steps=1 format=3 uid="uid://tile_tscn"]
+
+; =============================================================================
+; tile.tscn – Einzelner Arena-Tile
+; Root: StaticBody2D
+; Enthaelt: CollisionShape2D (32x32), ColorRect (Farbflaeche), Line2D (Risse)
+;
+; ZUSTAENDE (werden von tile.gd verwaltet):
+;   INTACT    -> ColorRect sichtbar, Kollision aktiv
+;   CRACKED   -> ColorRect + orangefarbene Riss-Linien, Kollision aktiv
+;   DESTROYED -> ColorRect unsichtbar, Kollision deaktiviert, Loch-Glow sichtbar
+;
+; Koordinatensystem: Position wird von arena_grid.gd gesetzt.
+; Die lokale Origin (0,0) liegt in der Mitte des Tiles.
+; =============================================================================
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tile"]
+; 30x30 px – 1px kleiner als 32x32 Grid um sichtbare Trennlinien zu erzeugen
+size = Vector2(30.0, 30.0)
+
+[node name="Tile" type="StaticBody2D"]
+; Physics-Layer 2 (Terrain) – Spieler und Projektile koennen dagegen kollidieren
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_tile")
+
+; --- Tile-Farbflaeche ---
+; Farbe = INTACT (#1A1A2E dunkles Obsidian) – wird von tile.gd je nach Zustand geaendert.
+; Zentriert: -15 bis +15 in X und Y.
+[node name="TileColor" type="ColorRect" parent="."]
+offset_left = -15.0
+offset_top = -15.0
+offset_right = 15.0
+offset_bottom = 15.0
+color = Color(0.102, 0.102, 0.18, 1.0)
+
+; --- Riss-Linien (CRACKED-Zustand) ---
+; Standardmaessig unsichtbar. tile.gd macht sie sichtbar bei Zustandswechsel zu CRACKED.
+; Zwei diagonale Linien simulieren einen Riss durch den Tile.
+[node name="CrackLines" type="Node2D" parent="."]
+visible = false
+
+[node name="Crack1" type="Line2D" parent="CrackLines"]
+points = PackedVector2Array(-15, -8, -3, 2, 8, -5, 15, 10)
+width = 1.5
+default_color = Color(1.0, 0.4, 0.0, 0.9)
+
+[node name="Crack2" type="Line2D" parent="CrackLines"]
+points = PackedVector2Array(-5, 15, 4, 5, -2, -3, 6, -15)
+width = 1.0
+default_color = Color(1.0, 0.4, 0.0, 0.7)
+
+; --- Loch-Glow (DESTROYED-Zustand) ---
+; Orangerot leuchtende Unterlage die durch das Loch sichtbar wird.
+; Standardmaessig unsichtbar. tile.gd aktiviert es bei DESTROYED.
+[node name="HoleGlow" type="ColorRect" parent="."]
+visible = false
+offset_left = -15.0
+offset_top = -15.0
+offset_right = 15.0
+offset_bottom = 15.0
+; Rift-Orange gemaess Moodboard 02 (Destructible Rift Grounds)
+color = Color(1.0, 0.267, 0.0, 0.85)
+z_index = -1
