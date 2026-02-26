@@ -1467,9 +1467,9 @@ Magenta-Output ist roh – immer manuell in der DAW nachbearbeiten, bevor es in 
 ```
 /scenes/ui/main_menu.tscn         → Hauptmenü
 /scenes/ui/settings_menu.tscn     → Einstellungen (Tab-basiert)
-/scenes/ui/lobby_screen.tscn      → Spieler-Auswahl vor Match
-/scripts/ui/main_menu.gd
-/scripts/ui/settings_menu.gd
+/scenes/ui/lobby.tscn             → Spieler-Auswahl vor Match
+/scripts/main_menu.gd
+/scripts/settings_menu.gd
 ```
 
 ---

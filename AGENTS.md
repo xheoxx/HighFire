@@ -35,12 +35,28 @@
 ```
 
 ### Commit-Konventionen
+
+#### Präfix-Format
 Commits immer mit **Phase + Stream-Buchstabe** als Präfix aus `PLAN_PHASES.md`:
 ```
 [1A] feat: MainArena-Szene angelegt
 [2B] fix: Dodge-Cooldown korrigiert
 [3C] feat: Target-Lock HUD-Ring hinzugefügt
 ```
+
+#### Commit-Häufigkeit
+- **Nach jeder abgeschlossenen logischen Einheit committen** – nicht erst am Stream-Ende.
+  Eine logische Einheit ist z. B.: eine neue Datei, eine abgeschlossene Funktion, eine Konfigurationssektion.
+- Faustregel: **lieber zu oft als zu selten** – ein Commit pro Datei oder pro zusammengehöriger Dateigruppe ist ideal.
+- Niemals mehrere unabhängige Systeme in einem einzigen Commit bündeln.
+
+#### Commit-Message-Qualität
+- Die Message erklärt **warum** eine Änderung gemacht wurde, nicht nur **was** geändert wurde.
+- Schlecht: `project.godot geändert`
+- Gut: `[1E] feat: Input-Actions für alle 4 Spieler in project.godot definiert`
+- Gut: `[1E] feat: AutoLoad-Reihenfolge festgelegt – ModLoader muss zuerst starten`
+- Die erste Zeile ist die Zusammenfassung (max. 72 Zeichen). Bei Bedarf folgt eine Leerzeile und dann eine ausführlichere Beschreibung.
+- Typen: `feat` (neu), `fix` (Bugfix), `refactor` (Umstrukturierung ohne Funktionsänderung), `docs` (nur Dokumente), `chore` (Konfiguration, Projektstruktur)
 
 ### Branch-Naming-Konvention
 Ein Branch pro Phase-Stream-Kombination:
@@ -66,6 +82,48 @@ Immer valides Godot 4 `.tscn`-Format verwenden.
 - Alle Konstanten und Balancing-Werte aus `DESIGN.md` übernehmen
 - Signale bevorzugen statt direkter Node-Referenzen
 - `ArenaStateManager` ist der einzige Node, der den globalen State ändern darf
+
+### Code-Kommentar-Regeln (Pflicht)
+
+Kommentare sind **kein Nice-to-have** – sie sind Pflichtbestandteil jedes Scripts. Ziel: Auch jemand ohne Godot-Erfahrung soll verstehen, was eine Funktion tut und warum sie so gebaut ist.
+
+#### Was kommentiert werden muss
+- **Jede Funktion**: ein Kommentar direkt darüber – was macht sie, wozu dient sie im Spiel?
+- **Jede nicht-triviale Variable**: Was bedeutet dieser Wert im Spielkontext?
+- **Jedes Signal**: Wer sendet es, wer empfängt es, warum existiert es?
+- **Jede Konstante / Enum**: Was repräsentiert dieser Wert?
+- **Jede Bedingung (`if`) die nicht selbsterklärend ist**: Kurzer Grund warum genau diese Prüfung hier steht.
+- **Godot-spezifische Idiome** (beim ersten Auftreten): z. B. `call_deferred`, `@export`, `process_mode` kurz erläutern.
+
+#### Kommentar-Stil
+```gdscript
+# --- RICHTIG ---
+
+# Bewegt den Spieler basierend auf Controller-Input.
+# move_and_slide() übernimmt die Kollisionserkennung automatisch.
+func _physics_process(delta: float) -> void:
+    velocity = input_vector * speed
+    move_and_slide()
+
+# Wie viele Pixel pro Sekunde sich der Spieler normal bewegt.
+# Wert kommt aus balance_config.tres, damit er ohne Code-Änderung angepasst werden kann.
+var speed: float = 250.0
+
+# --- FALSCH (zu trivial / sagt nichts Neues) ---
+# Setze velocity
+velocity = input_vector * speed
+```
+
+#### Datei-Header (Pflicht für jede .gd-Datei)
+Jede Script-Datei beginnt mit einem kurzen Header-Kommentar:
+```gdscript
+# =============================================================================
+# DATEINAME: player.gd
+# ZWECK:     Steuert einen einzelnen Spieler – Bewegung, Dodge, Animationen.
+#            Wird von player_input.gd mit Eingaben versorgt.
+# ABHÄNGIG VON: player_input.gd, balance_config.tres, sprite_config.tres
+# =============================================================================
+```
 
 ### Abhängigkeiten respektieren
 Streams innerhalb einer Phase können parallel laufen, aber **Phase N darf nicht starten bevor Phase N-1 abgeschlossen ist**. Status in `PLAN_PHASES.md` aktuell halten.
