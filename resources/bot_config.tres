@@ -1,0 +1,99 @@
+[gd_resource type="Resource" script_class="" load_steps=1 format=3]
+
+; =============================================================================
+; bot_config.tres
+; Zweck: Zentrale Konfiguration fuer alle 4 Bot-Schwierigkeitsstufen.
+;        bot_controller.gd (Phase 4 Stream G) laedt diese Resource.
+;        Kein Wert hardcodiert – Data-Mods koennen Bots anpassen.
+; Geladen von: bot_controller.gd, bot_difficulty.gd (Phase 4G)
+; =============================================================================
+
+[resource]
+
+; --- Verfuegbare Schwierigkeitsstufen ---
+; Schluessel: Schwierigkeits-ID (wird in Lobby-Auswahl angezeigt)
+; Wert: Dictionary mit allen KI-Parametern fuer diese Stufe
+
+difficulty_levels = {
+	; --- EINSTEIGER: Fuer Spieler die den Controller kennenlernen ---
+	"beginner": {
+		"display_name": "Einsteiger",
+		"reaction_time_ms": 600,
+		"error_rate": 0.4,
+		"uses_combos": false,
+		"max_combo_depth": 0,
+		"uses_dodge": false,
+		"dodge_on_projectile": false,
+		"uses_spells": false,
+		"uses_weapon_crafting": false,
+		"movement_randomness": 0.6,
+		"target_prediction": false,
+		"description": "Kaum reaktiv, zufaellige Bewegung, keine Combos."
+	},
+
+	; --- NORMAL: Haerter aber nicht unfair ---
+	"normal": {
+		"display_name": "Normal",
+		"reaction_time_ms": 350,
+		"error_rate": 0.2,
+		"uses_combos": true,
+		"max_combo_depth": 2,
+		"uses_dodge": true,
+		"dodge_on_projectile": true,
+		"uses_spells": true,
+		"uses_weapon_crafting": false,
+		"movement_randomness": 0.3,
+		"target_prediction": false,
+		"description": "Weicht Projektilen aus, nutzt 2-Schritt-Combos."
+	},
+
+	; --- EXPERTE: Guter Spieler ohne Frame-Perfektion ---
+	"expert": {
+		"display_name": "Experte",
+		"reaction_time_ms": 150,
+		"error_rate": 0.05,
+		"uses_combos": true,
+		"max_combo_depth": 99,
+		"uses_dodge": true,
+		"dodge_on_projectile": true,
+		"uses_spells": true,
+		"uses_weapon_crafting": true,
+		"movement_randomness": 0.1,
+		"target_prediction": true,
+		"description": "Volle Combos, praediktives Dodging, Terrain-Awareness."
+	},
+
+	; --- MEISTER: Maximale Herausforderung ---
+	"master": {
+		"display_name": "Meister",
+		"reaction_time_ms": 80,
+		"error_rate": 0.0,
+		"uses_combos": true,
+		"max_combo_depth": 99,
+		"uses_dodge": true,
+		"dodge_on_projectile": true,
+		"uses_spells": true,
+		"uses_weapon_crafting": true,
+		"movement_randomness": 0.02,
+		"target_prediction": true,
+		"description": "Frame-genaues Dodging, perfekte Combos, maximaler Timing-Druck."
+	}
+}
+
+; --- Standard-Schwierigkeit fuer neue Spiele ---
+default_difficulty = "normal"
+
+; --- Target-Auswahl-Strategie ---
+; "nearest" = Naechster Spieler
+; "lowest_hp" = Spieler mit niedrigstem HP
+; "combo" = Erst niedrigstes HP, dann naechster bei Gleichstand
+bot_target_strategy = "combo"
+
+; --- Entscheidungs-Zustand-Machine-States ---
+; Wird von bot_controller.gd als Enum-Referenz genutzt.
+; Reihenfolge: IDLE -> APPROACH -> ATTACK -> DODGE -> RETREAT
+bot_states = ["IDLE", "APPROACH", "ATTACK", "DODGE", "RETREAT"]
+
+; --- LOS-Check vor Angriff ---
+; Wenn true: Bot prueft Line-of-Sight zum Ziel vor jedem Angriff.
+bot_use_los_check = true

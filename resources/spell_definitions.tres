@@ -1,0 +1,63 @@
+[gd_resource type="Resource" script_class="" load_steps=1 format=3]
+
+; =============================================================================
+; spell_definitions.tres
+; Zweck: Definiert alle Elemente, ihre D-Pad-Kodierung (Modus L) und die
+;        Kombinations-Tabelle fuer Zwei-Element-Spells.
+;        Kein Wert hardcodiert – Data-Mods koennen Elemente erweitern.
+; Geladen von: spell_system.gd (Phase 2 Stream B)
+; Verweise: spell_values.tres enthaelt Schadens-/Cooldown-Werte pro Spell
+; =============================================================================
+
+[resource]
+
+; --- Modus-L-Element-Kodierung (D-Pad-Richtung → Element-ID) ---
+; Schluessel: Richtungs-Enum-String (wie in motion_input_parser.gd definiert)
+; Wert: Element-ID-String (wird als Key in der Kombinations-Tabelle genutzt)
+; Diagonalen (UP_RIGHT, DOWN_LEFT) sind Schatten und Licht.
+element_by_direction = {
+	"UP": "fire",
+	"DOWN": "ice",
+	"RIGHT": "lightning",
+	"LEFT": "earth",
+	"UP_RIGHT": "shadow",
+	"DOWN_LEFT": "light"
+}
+
+; --- Modus-L-Kombinations-Tabelle ---
+; Schluessel: Set aus zwei Element-IDs als sortierter String "elem_a+elem_b"
+; Reihenfolge der Eingabe ist egal – Sortierung erfolgt alphabetisch im Code.
+; Wert: Spell-ID der ausgeloesten Wirkung.
+;
+; Alle 6 Kombinationen aus DESIGN.md: Spellcrafting-System
+combination_table = {
+	"fire+ice": "steam_cloud",
+	"fire+lightning": "plasmabolt",
+	"earth+lightning": "seismic_pulse",
+	"earth+ice": "frostwall",
+	"light+shadow": "mirror_clone",
+	"earth+light": "heal_field"
+}
+
+; --- Element-Primaereffekte (fuer HUD und Spell-Beschreibungen) ---
+; Wird von status_effect_component.gd genutzt um den richtigen Effekt
+; dem richtigen Element zuzuordnen.
+element_primary_effect = {
+	"fire": "burning",
+	"ice": "slow",
+	"lightning": "stun",
+	"earth": "armor_break",
+	"shadow": "blind",
+	"light": "hot"
+}
+
+; --- Element-Farb-Kodierung fuer VFX und HUD ---
+; Farben als Hex-Strings – werden in GDScript zu Color() konvertiert.
+element_color = {
+	"fire": "#FF4400",
+	"ice": "#44AAFF",
+	"lightning": "#FFE000",
+	"earth": "#8B5E3C",
+	"shadow": "#6622AA",
+	"light": "#FFD700"
+}

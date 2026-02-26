@@ -1,0 +1,171 @@
+[gd_resource type="Resource" script_class="" load_steps=1 format=3]
+
+; =============================================================================
+; spell_values.tres
+; Zweck: Schadens-, Reichweiten- und Cooldown-Werte pro Spell-ID.
+;        Getrennt von spell_definitions.tres damit Balance-Mods nur diese
+;        Datei ueberschreiben muessen ohne die Struktur-Logik anzufassen.
+;        Alle Werte mit ⚠ sind Startwerte fuer die Testphase.
+; Geladen von: spell_system.gd (Phase 2 Stream B)
+; =============================================================================
+
+[resource]
+
+; --- Magie-Timeout-Parameter (lt. DESIGN.md: Magie-Timeout) ---
+; ⚠ Alle Werte offen bis Testphase – Startwerte zum Testen.
+
+; Wie lange Modus L/R/B verfuegbar ist (Sekunden).
+magic_active_time = 8.0
+
+; Wie lange die Magie braucht um sich nach Ablauf zu erholen (Sekunden).
+magic_regen_time = 5.0
+
+; Trigger fuer Regeneration:
+;   "passive"  = Magie regeneriert sich automatisch ueber Zeit
+;   "on_hit"   = Magie regeneriert sich nur wenn Treffer mit Waffe landen
+;   "both"     = beides gleichzeitig aktiv
+magic_regen_trigger = "passive"
+
+; --- Modus-L-Spell-Werte (generische Element-Kombinations-Spells) ---
+; Format pro Spell-Dictionary: damage_min, damage_max, range, cooldown, speed
+; "range" = maximale Reichweite in Pixeln (0 = AoE um den Caster)
+; "speed" = Projektilgeschwindigkeit px/s (0 = kein Projektil / sofort)
+; "aoe_radius" = Explosionsradius in Pixeln (0 = kein AoE)
+
+spell_values = {
+	; Feuer + Eis = Dampfwolke – AoE-Sichtblocker, kein direkter Schaden
+	"steam_cloud": {
+		"damage_min": 0,
+		"damage_max": 0,
+		"range": 0,
+		"speed": 0,
+		"aoe_radius": 120,
+		"cooldown": 2.0,
+		"applies_wet": true,
+		"description": "Erzeugt eine Dampfwolke die Sicht blockiert und NASS anwendet."
+	},
+	; Feuer + Blitz = Plasmabolt – schnellstes Projektil
+	"plasmabolt": {
+		"damage_min": 18,
+		"damage_max": 25,
+		"range": 800,
+		"speed": 700,
+		"aoe_radius": 0,
+		"cooldown": 1.2,
+		"applies_wet": false,
+		"description": "Schnelles Energie-Projektil, mittlerer Schaden."
+	},
+	; Blitz + Erde = Seismischer Impuls – Tiles zerstoeren, AoE
+	"seismic_pulse": {
+		"damage_min": 18,
+		"damage_max": 25,
+		"range": 0,
+		"speed": 0,
+		"aoe_radius": 80,
+		"cooldown": 2.5,
+		"applies_wet": false,
+		"description": "AoE-Erschuetterung, zerstoert Tiles im Radius."
+	},
+	; Eis + Erde = Frostwall – Terrain-Blockade (kein Schaden, nur Block)
+	"frostwall": {
+		"damage_min": 0,
+		"damage_max": 0,
+		"range": 150,
+		"speed": 0,
+		"aoe_radius": 0,
+		"cooldown": 2.0,
+		"applies_wet": true,
+		"description": "Erstellt eine kurze Eisbarriere die Bewegung und Projektile blockiert."
+	},
+	; Schatten + Licht = Spiegelklon – Taeuschungs-Decoy
+	"mirror_clone": {
+		"damage_min": 0,
+		"damage_max": 0,
+		"range": 0,
+		"speed": 0,
+		"aoe_radius": 0,
+		"cooldown": 2.5,
+		"applies_wet": false,
+		"description": "Erstellt einen Decoy-Klon des Casters der Feinde ablenkt."
+	},
+	; Licht + Erde = Heilfeld – permanenter HoT-Bereich auf dem Boden
+	"heal_field": {
+		"damage_min": 0,
+		"damage_max": 0,
+		"range": 0,
+		"speed": 0,
+		"aoe_radius": 100,
+		"cooldown": 2.5,
+		"applies_wet": false,
+		"description": "Erzeugt einen Bereich der verbundete Spieler heilt."
+	},
+
+	; --- Modus-R-Spell-Werte (feste Sequenz-Spells) ---
+
+	; ↓→ + B = Feuerball
+	"fireball": {
+		"damage_min": 18,
+		"damage_max": 25,
+		"range": 600,
+		"speed": 450,
+		"aoe_radius": 0,
+		"cooldown": 1.0,
+		"applies_wet": false,
+		"description": "Klassisches Feuer-Projektil, mittlerer Schaden mit Brennen-Effekt."
+	},
+	; ↓← + B = Eisschild
+	"ice_shield": {
+		"damage_min": 0,
+		"damage_max": 0,
+		"range": 0,
+		"speed": 0,
+		"aoe_radius": 0,
+		"cooldown": 1.5,
+		"applies_wet": false,
+		"description": "Blockiert den naechsten eingehenden Treffer (einmalig)."
+	},
+	; →↓→ + B = Blitzschlag (Z-Motion)
+	"lightning_strike": {
+		"damage_min": 35,
+		"damage_max": 50,
+		"range": 200,
+		"speed": 0,
+		"aoe_radius": 0,
+		"cooldown": 1.8,
+		"applies_wet": false,
+		"description": "Hoher Schaden, kurze Reichweite – klassische Z-Motion-Finale."
+	},
+	; ←→ + B = Erdstampf (AoE, zerstoert nahe Tiles)
+	"earth_stomp": {
+		"damage_min": 18,
+		"damage_max": 25,
+		"range": 0,
+		"speed": 0,
+		"aoe_radius": 96,
+		"cooldown": 1.5,
+		"applies_wet": false,
+		"description": "AoE um den Spieler, zerstoert benachbarte Tiles."
+	},
+	; ↑↓ + B = Schattensprung (kurze Teleport-Dash)
+	"shadow_jump": {
+		"damage_min": 0,
+		"damage_max": 0,
+		"range": 200,
+		"speed": 0,
+		"aoe_radius": 0,
+		"cooldown": 1.5,
+		"applies_wet": false,
+		"description": "Kurze Teleportation in Blickrichtung, keine Kollision waehrend des Sprungs."
+	},
+	; ↑→ + B = Lichtstrahl (langer Strahl durch Gegner)
+	"light_beam": {
+		"damage_min": 18,
+		"damage_max": 25,
+		"range": 900,
+		"speed": 1200,
+		"aoe_radius": 0,
+		"cooldown": 2.0,
+		"applies_wet": false,
+		"description": "Langer Strahl der mehrere Gegner nacheinander trifft."
+	}
+}

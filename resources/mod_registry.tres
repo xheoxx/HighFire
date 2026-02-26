@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="" load_steps=1 format=3]
+
+; =============================================================================
+; mod_registry.tres
+; Zweck: Liste aller geladenen Mods zur Laufzeit.
+;        Wird von mod_loader.gd befuellt und von anderen Systemen nur gelesen.
+;        Enthalt pro Mod: Name, Version, Kompatibilitaets-String, Hash-Pruefsumme.
+; =============================================================================
+
+[resource]
+
+; Geladene Mods als Array von Dictionaries.
+; Struktur pro Eintrag:
+;   { "name": "mod_name", "version": "1.0.0", "compat": "1", "hash": "abc123" }
+; Beim Spielstart leer – wird von mod_loader.gd befuellt.
+loaded_mods = []
+
+; Minimale Engine-Kompatibilitaets-Version die ein Mod deklarieren muss.
+; Mods mit niedrigerer Version werden abgelehnt.
+min_compat_version = "1"

@@ -1,0 +1,70 @@
+[gd_resource type="Resource" script_class="" load_steps=1 format=3]
+
+; =============================================================================
+; tile_config.tres
+; Zweck: Tile-interne Werte fuer alle Zustaende: Farben, HP-Schwellwerte,
+;        Regenerations-Timer und visuelle Parameter.
+;        tile.gd und arena_grid.gd lesen aus dieser Resource.
+; Geladen von: tile.gd (Phase 1D), arena_grid.gd (Phase 1D)
+; =============================================================================
+
+[resource]
+
+; --- HP-Konfiguration pro Tile ---
+; Gesamte HP eines frischen Tiles.
+tile_max_hp = 60
+
+; HP-Schwellwert fuer den Uebergang INTACT -> CRACKED.
+; Wenn HP diesen Wert unterschreiten, wird der Tile gerissen dargestellt.
+tile_crack_threshold = 30
+
+; HP-Schwellwert fuer den Uebergang CRACKED -> DESTROYED.
+; Wenn HP diesen Wert unterschreiten (oder 0), wird der Tile zerstoert.
+tile_destroy_threshold = 0
+
+; --- Farb-Konfiguration pro Zustand ---
+; Alle Farben als Hex-Strings (lt. DESIGN.md Destructible Rift Grounds)
+
+; INTACT: Dunkle Obsidian-Farbe – Arena-Grundton
+color_intact = "#1A1A2E"
+
+; CRACKED: Gleiche Grundfarbe – Risse kommen via Line2D-Overlay hinzu
+color_cracked_base = "#1A1A2E"
+
+; CRACKED: Farbe der Riss-Line2Ds (Rift-Orange-Gluehen)
+color_crack_lines = "#FF6600"
+
+; DESTROYED: Hintergrundfarbe sichtbar durch das Loch (Rift-Orange-Gluehen)
+color_hole_glow = "#FF4400"
+
+; Anzahl der Riss-Linien wenn ein Tile im CRACKED-Zustand ist.
+; Mehr Linien = dramatischer, aber mehr Draw-Calls.
+crack_line_count = 3
+
+; Breite der Riss-Linien in Pixeln.
+crack_line_width = 1.5
+
+; --- Regenerations-Konfiguration ---
+; Ob Tiles sich regenerieren koennen (false = dauerhaft zerstoert bis Runden-Ende)
+tile_regen_enabled = false
+
+; Zeit in Sekunden bis ein DESTROYED-Tile zu CRACKED wird (nur wenn regen_enabled).
+tile_regen_destroyed_to_cracked = 15.0
+
+; Zeit in Sekunden bis ein CRACKED-Tile zu INTACT wird (nur wenn regen_enabled).
+tile_regen_cracked_to_intact = 8.0
+
+; --- Kollisions-Konfiguration ---
+; Physics-Layer auf dem Tiles als Kollision registriert sind.
+; Muss mit project.godot Layer 2 (Terrain) uebereinstimmen.
+tile_physics_layer = 2
+
+; Physics-Maske fuer Tile-Kollision (Spieler-Layer 1 + Projektile-Layer 3).
+tile_physics_mask = 5
+
+; --- Visueller Out-of-Bounds-Indikator ---
+; Alpha des Loch-Glows wenn ein Tile DESTROYED ist (0.0-1.0).
+hole_glow_alpha = 0.8
+
+; Pulsier-Geschwindigkeit des Loch-Glows (Sinus-Frequenz in Hz).
+hole_glow_pulse_hz = 1.5
