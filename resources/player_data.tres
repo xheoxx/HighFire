@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="" load_steps=1 format=3]
+
+; =============================================================================
+; player_data.tres
+; Zweck: Spieler-spezifische Konfiguration: Primärfarben, Akzentfarben und
+;        Sprite-Toggle fuer alle 4 Spieler-Slots.
+;        player.gd und player_input.gd lesen aus dieser Resource.
+; Geladen von: player.gd (Phase 1B)
+; Abhaengig von: balance_config.tres (Speed, HP, Dodge-Werte kommen von dort)
+; =============================================================================
+
+[resource]
+
+; --- Spieler-Primärfarben (Reihenfolge: Spieler 0, 1, 2, 3) ---
+; Primärfarbe wird auf ColorRect (Platzhalter) UND AnimatedSprite2D.modulate gesetzt.
+; Rim-Glow (Line2D) erhält ebenfalls diese Farbe.
+; Werte lt. DESIGN.md Spieler-Farbidentitäts-Tabelle.
+player_primary_colors = Array[Color]([
+    Color(0.0, 0.831, 1.0, 1.0),
+    Color(1.0, 0.0, 0.502, 1.0),
+    Color(0.627, 1.0, 0.0, 1.0),
+    Color(1.0, 0.843, 0.0, 1.0)
+])
+
+; --- Spieler-Akzentfarben (Reihenfolge: Spieler 0, 1, 2, 3) ---
+; Akzentfarbe wird für sekundäre Effekte genutzt (z.B. Dodge-Trail-Ende, Spell-Trails).
+; Werte lt. DESIGN.md Spieler-Farbidentitäts-Tabelle.
+player_accent_colors = Array[Color]([
+    Color(1.0, 1.0, 1.0, 1.0),
+    Color(1.0, 0.4, 0.0, 1.0),
+    Color(1.0, 1.0, 1.0, 1.0),
+    Color(1.0, 0.133, 0.0, 1.0)
+])
+
+; --- Sprite-Modus ---
+; false = ColorRect-Platzhalter sichtbar, AnimatedSprite2D unsichtbar (Standard bis Phase 4H).
+; true  = AnimatedSprite2D sichtbar, ColorRect unsichtbar.
+; Umschalten ohne Code-Änderung – nur diesen Wert setzen.
+use_sprites = false
+
+; --- Spieler-Namen (für HUD-Anzeige und Scoreboard) ---
+; Standardnamen – werden in der Lobby überschrieben.
+player_names = Array[String](["P1", "P2", "P3", "P4"])
