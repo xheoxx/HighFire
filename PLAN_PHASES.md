@@ -214,7 +214,10 @@ Design-Ergänzungen und -Korrekturen die nach Abschluss von Phase 0 entstehen. L
 
 ---
 
-#### Stream C – Target System
+#### Stream C – Target System ✅ ABGESCHLOSSEN
+**Branch**: `phase1/stream-c-target` – bereit für PR
+**Abgeschlossene Dateien**: `scripts/line_of_sight.gd`, `scripts/target_system.gd`, `scripts/target_indicator.gd`, `scenes/target_indicator.tscn`
+
 **Abhängigkeit**: Stream A + B müssen abgeschlossen sein.
 
 **Zu erstellende Dateien:**
