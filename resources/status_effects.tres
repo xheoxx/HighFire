@@ -1,0 +1,195 @@
+[gd_resource type="Resource" script_class="" load_steps=1 format=3]
+
+; =============================================================================
+; status_effects.tres
+; Zweck: Alle 8 Statuseffekt-Definitionen mit Stapel-Parametern, Timern,
+;        Immunitats-Regeln und Icon-Farben.
+;        status_effect_component.gd laedt diese Resource pro Spieler.
+;        Kein Wert hardcodiert – Data-Mods koennen Effekte ergaenzen.
+; Geladen von: status_effect_component.gd, reaction_checker.gd (Phase 2B)
+; =============================================================================
+
+[resource]
+
+; --- Standard-Stapel-Faktor (gilt wenn Effekt keinen eigenen definiert) ---
+; Formel: Stack-Wert(n) = Basiswert * stapel_faktor^(n-1)
+; 0.5 = geometrisch halbierend (Stack 1=100%, Stack 2=50%, Stack 3=25%)
+default_stack_factor = 0.5
+
+; --- Maximale gleichzeitige Debuff-Typen auf einem Ziel ---
+; Anti-Frustrations-Regel: bei Ueberschreitung wird aeltester Typ entfernt.
+max_debuff_types = 3
+
+; --- Reaktions-Cooldown: selbe Reaktion kann nicht zweimal in 3s auftreffen ---
+reaction_cooldown = 3.0
+
+; =============================================================================
+; Effekt-Definitionen
+; Format pro Effekt:
+;   "duration":       Dauer eines einzelnen Stacks in Sekunden
+;   "max_stacks":     Maximale Anzahl gleichzeitiger Stacks dieses Effekts
+;   "stack_factor":   Geometrischer Abnahmefaktor pro Stack
+;   "tick_interval":  Sekunden zwischen Ticks (0.0 = kein Tick, Einmal-Effekt)
+;   "icon_color":     Hex-Farbe des HUD-Icons
+;   "immunity_after": Sekunden Immunitat nach Ablauf (0.0 = keine)
+;   "is_soft_cc":     true = Dodge bricht diesen Effekt (Soft-CC)
+;   "is_hard_cc":     true = Einfrieren-Level (Dodge bricht NICHT)
+; =============================================================================
+effects = {
+	; --- BRENNEN: Schaden ueber Zeit, ausgeloest durch Feuer-Spells ---
+	"burning": {
+		"duration": 3.0,
+		"max_stacks": 4,
+		"stack_factor": 0.5,
+		"tick_interval": 0.5,
+		"icon_color": "#FF4400",
+		"immunity_after": 0.0,
+		"is_soft_cc": false,
+		"is_hard_cc": false,
+		"base_damage_per_tick": 5,
+		"description": "Schaden jede 0.5s. Stapelt sich bis zu 4x (geometrisch abnehmend)."
+	},
+
+	; --- VERLANGSAMUNG: Bewegungs-Speed-Malus, ausgeloest durch Eis ---
+	"slow": {
+		"duration": 2.5,
+		"max_stacks": 3,
+		"stack_factor": 0.5,
+		"tick_interval": 0.0,
+		"icon_color": "#44AAFF",
+		"immunity_after": 0.0,
+		"is_soft_cc": true,
+		"is_hard_cc": false,
+		"base_slow_percent": 0.3,
+		"freeze_threshold_stacks": 3,
+		"description": "Speed-Malus 30% pro Stack (abnehmend). Bei Max-Stacks -> EINFRIEREN."
+	},
+
+	; --- EINFRIEREN: Hard-CC, ausgeloest bei Verlangsamungs-Schwelle ---
+	"frozen": {
+		"duration": 1.5,
+		"max_stacks": 1,
+		"stack_factor": 1.0,
+		"tick_interval": 0.0,
+		"icon_color": "#88CCFF",
+		"immunity_after": 3.0,
+		"is_soft_cc": false,
+		"is_hard_cc": true,
+		"description": "Vollstaendige Bewegungs- und Input-Sperre. 3s Immunitat danach."
+	},
+
+	; --- BETAEBUNG: Soft-CC (Input-Sperre), ausgeloest durch Blitz ---
+	"stun": {
+		"duration": 0.6,
+		"max_stacks": 2,
+		"stack_factor": 0.5,
+		"tick_interval": 0.0,
+		"icon_color": "#FFE000",
+		"immunity_after": 1.5,
+		"is_soft_cc": true,
+		"is_hard_cc": false,
+		"description": "Input-Sperre, Physik laeuft weiter. 1.5s Immunitat danach."
+	},
+
+	; --- RUESTUNGS-DEBUFF: Multiplikativer Schadens-Verstaerker (Erde) ---
+	"armor_break": {
+		"duration": 5.0,
+		"max_stacks": 3,
+		"stack_factor": 0.5,
+		"tick_interval": 0.0,
+		"icon_color": "#8B5E3C",
+		"immunity_after": 0.0,
+		"is_soft_cc": false,
+		"is_hard_cc": false,
+		"base_damage_multiplier": 1.25,
+		"description": "Eingehender Schaden x1.25 (Stack 1), geometrisch abnehmend."
+	},
+
+	; --- BLIND: Sicht-Einschraenkung und LOS-Blockade (Schatten) ---
+	"blind": {
+		"duration": 2.0,
+		"max_stacks": 2,
+		"stack_factor": 0.5,
+		"tick_interval": 0.0,
+		"icon_color": "#6622AA",
+		"immunity_after": 0.0,
+		"is_soft_cc": true,
+		"is_hard_cc": false,
+		"description": "Kein Target-Lock, LOS-Raycast blockiert. Dodge bricht diesen Effekt."
+	},
+
+	; --- NASS: Reaktions-Primer, kein direkter Kampfeffekt ---
+	"wet": {
+		"duration": 4.0,
+		"max_stacks": 1,
+		"stack_factor": 1.0,
+		"tick_interval": 0.0,
+		"icon_color": "#0088FF",
+		"immunity_after": 0.0,
+		"is_soft_cc": false,
+		"is_hard_cc": false,
+		"description": "Kein Kampfeffekt. Verstaerkt Blitz-Betaeubung (Reaktion Leitfaehigkeit)."
+	},
+
+	; --- UNSICHTBARKEIT: Caster-Buff (Selbst-Anwendung, Schatten) ---
+	"invisible": {
+		"duration": 1.5,
+		"max_stacks": 1,
+		"stack_factor": 1.0,
+		"tick_interval": 0.0,
+		"icon_color": "#220033",
+		"immunity_after": 1.0,
+		"is_soft_cc": false,
+		"is_hard_cc": false,
+		"self_alpha": 0.3,
+		"caster_alpha": 0.6,
+		"description": "Caster kaum sichtbar fuer andere. Bricht bei erstem Angriff/Spell."
+	},
+
+	; --- HEILUNG UEBER ZEIT: Licht-Sekundaereffekt (HoT) ---
+	"hot": {
+		"duration": 4.0,
+		"max_stacks": 2,
+		"stack_factor": 0.5,
+		"tick_interval": 1.0,
+		"icon_color": "#FFD700",
+		"immunity_after": 0.0,
+		"is_soft_cc": false,
+		"is_hard_cc": false,
+		"base_heal_per_tick": 8,
+		"description": "Heilt 8 HP jede Sekunde. Kann auf Verbundete angewendet werden."
+	}
+}
+
+; --- Reaktions-Tabelle ---
+; Format: { "effekt_a+effekt_b": { "reaction_id", "description", ... } }
+; Reihenfolge der Schluessel alphabetisch sortiert (wie in reaction_checker.gd)
+reactions = {
+	"burning+frozen": {
+		"reaction_id": "steam_burst",
+		"description": "Dampfstoss: AoE-Druckwelle, Knockback ~200px, konsumiert alle Eis/Feuer-Stacks.",
+		"knockback_distance": 200.0
+	},
+	"burning+slow": {
+		"reaction_id": "steam_burst",
+		"description": "Dampfstoss (Verlangsamungs-Variante): selber Effekt wie burning+frozen.",
+		"knockback_distance": 200.0
+	},
+	"stun+wet": {
+		"reaction_id": "conductivity",
+		"description": "Leitfaehigkeit: Betaeubungs-Dauer verdoppelt; Blitz springt auf nahe Spieler (150px, halbe Betaeubung).",
+		"chain_radius": 150.0,
+		"chain_stun_factor": 0.5
+	},
+	"armor_break+burning": {
+		"reaction_id": "meltdown",
+		"description": "Schmelze: Ruestungs-Multiplikator einmalig auf x2.0; DoT-Tick loest sofort Burst-Schaden aus.",
+		"burst_multiplier": 2.0
+	},
+	"armor_break+blind": {
+		"reaction_id": "panic",
+		"description": "Panik (EXPERIMENTELL): Ziel verliert Bewegungsrichtungskontrolle fuer 2s.",
+		"panic_duration": 2.0,
+		"experimental": true
+	}
+}
