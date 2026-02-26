@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="" load_steps=1 format=3]
+
+; =============================================================================
+; combo_definitions.tres
+; Zweck: STRUKTUR-STUB fuer das D-Pad-Sequenz-zu-Spell-Mapping.
+;        Diese Datei wird von Phase 1 Stream F ANGELEGT (Struktur + Modus-R),
+;        aber von Phase 2 Stream A (motion_input_parser.gd) vollstaendig
+;        MIT CONTENT befuellt. Nicht neu erstellen in Phase 2!
+;
+; motion_input_parser.gd laedt diese Resource und matcht Eingabe-Sequenzen
+; gegen die Combo-Tabellen.
+; =============================================================================
+
+[resource]
+
+; --- Modus-R-Sequenz-Tabelle (feste benannte Angriffe) ---
+; Schluessel: Richtungs-Array als String (z.B. "DOWN,RIGHT")
+; Wert: Spell-ID-String (wird in spell_values.tres nachgeschlagen)
+;
+; Alle 6 Modus-R-Combos aus DESIGN.md: Spellcrafting-System → Modus R
+mode_r_sequences = {
+	"DOWN,RIGHT": "fireball",
+	"DOWN,LEFT": "ice_shield",
+	"RIGHT,DOWN,RIGHT": "lightning_strike",
+	"LEFT,RIGHT": "earth_stomp",
+	"UP,DOWN": "shadow_jump",
+	"UP,RIGHT": "light_beam"
+}
+
+; --- Modus-B-Sequenz-Tabelle (maechtisgte Combos, 3+ Eingaben) ---
+; ⚠ LEER – wird von Phase 2 Stream A nach Testphase befuellt.
+; Hier nur die Struktur vorbereiten.
+mode_b_sequences = {}
+
+; --- Hinweis fuer Phase 2 Stream A ---
+; Die folgenden Felder werden von motion_input_parser.gd erwartet:
+;   mode_r_sequences: Dictionary { "DIR1,DIR2,...": "spell_id" }
+;   mode_b_sequences: Dictionary { "DIR1,DIR2,DIR3,...": "spell_id" }
+; Richtungs-Keys sind kommagetrennte Strings der Enum-Namen:
+;   UP, DOWN, LEFT, RIGHT, UP_RIGHT, UP_LEFT, DOWN_RIGHT, DOWN_LEFT
+
+; --- Analogstick-Deadzone (fuer Richtungsquantisierung) ---
+; Analogstick-Werte unter diesem Schwellwert werden ignoriert.
+; D-Pad-Eingaben sind digital und benoetigen keine Deadzone.
+analog_deadzone = 0.3
+
+; --- Ring-Buffer-Groesse ---
+; Wie viele Richtungs-Inputs maximal im Buffer gespeichert werden.
+; 8 reichen fuer alle geplanten Sequenzen (laengste ist 3 Eingaben).
+ring_buffer_size = 8
