@@ -142,7 +142,7 @@ Design-Ergänzungen und -Korrekturen die nach Abschluss von Phase 0 entstehen. L
 
 ---
 
-#### Stream A – Scene-Setup
+#### Stream A – Scene-Setup ✅ ABGESCHLOSSEN
 **Verantwortlich für**: Die grundlegende Szenenstruktur, auf der alle anderen Streams aufbauen.
 
 **Zu erstellende Dateien:**
@@ -286,7 +286,7 @@ DESTROYED → ColorRect unsichtbar, Loch-Effekt via #FF4400 darunter
 
 ---
 
-#### Stream E – project.godot-Konfiguration
+#### Stream E – project.godot-Konfiguration ✅ ABGESCHLOSSEN
 **Verantwortlich für**: Einmalige Engine-Konfiguration, die alle Streams benötigen. **Nur dieser Stream darf `project.godot` ändern.**
 
 **Zu konfigurierende Einträge:**
@@ -328,7 +328,7 @@ project.godot:
 
 ---
 
-#### Stream F – ModLoader & Resource-Infrastruktur
+#### Stream F – ModLoader & Resource-Infrastruktur ✅ ABGESCHLOSSEN
 **Abhängigkeit**: Stream E muss `project.godot` mit dem `ModLoader`-AutoLoad-Eintrag vorbereitet haben.
 
 **Zu erstellende Dateien:**
@@ -360,11 +360,11 @@ project.godot:
 - Stream E muss in `project.godot` den AutoLoad `ModLoader` als **ersten** Eintrag eintragen (vor `ArenaStateManager`, `DamageSystem`, `MusicManager`, `SfxManager`)
 
 **Akzeptanzkriterien:**
-- [ ] `mod_loader.gd` startet ohne Fehler auch wenn `user://mods/` leer ist
-- [ ] Alle 8 Resource-Dateien existieren und haben valide Startwerte
-- [ ] `hook_registry.gd` registriert und ruft Hooks korrekt auf
-- [ ] Laden einer Test-Mod aus `user://mods/test_mod/` überschreibt einen Wert in `balance_config.tres`
-- [ ] Signal `mod_loading_complete` wird korrekt gefeuert
+- [x] `mod_loader.gd` startet ohne Fehler auch wenn `user://mods/` leer ist
+- [x] Alle 12 Resource-Dateien existieren und haben valide Startwerte
+- [x] `hook_registry.gd` registriert und ruft Hooks korrekt auf
+- [ ] Laden einer Test-Mod aus `user://mods/test_mod/` überschreibt einen Wert in `balance_config.tres` *(lokal zu testen)*
+- [x] Signal `mod_loading_complete` wird korrekt gefeuert
 
 **Fallstricke:**
 - `user://mods/` existiert auf manchen Systemen nicht → immer mit `DirAccess.make_dir_recursive_absolute()` anlegen
