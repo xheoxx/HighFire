@@ -1,0 +1,203 @@
+[gd_resource type="Resource" script_class="" load_steps=1 format=3]
+
+; =============================================================================
+; weapon_definitions.tres
+; Zweck: Alle 5 Waffen-Archetypen mit Stats, Spell-Synergien und Upgrade-Nodes.
+;        weapon_system.gd (Phase 2 Stream C) laedt diese Resource.
+;        Kein Wert hardcodiert – Data-Mods koennen Archetypen hinzufuegen.
+; Geladen von: weapon_system.gd (Phase 2 Stream C)
+; =============================================================================
+
+[resource]
+
+; --- Waffen-Archetypen ---
+; Format pro Archetyp:
+;   "name": lesbarerDisplayname
+;   "reach": Reichweite in Pixeln
+;   "speed": Angriffs-Cooldown in Sekunden (niedrig = schnell)
+;   "base_damage_class": "light" | "medium" | "heavy" (Referenz auf balance_config)
+;   "spell_synergy": Array von Element-IDs mit Synergie-Bonus
+;   "upgrade_nodes": Array von 3 Upgrade-Dictionaries
+;     jeder Node: { "name", "description", "material_cost", "effect_type", "effect_value" }
+;   "rim_glow_color": Farbe die der Rim-Glow des Spielers annimmt wenn diese Waffe aktiv ist
+;   "description": kurze Beschreibung fuer HUD-Tooltip
+
+weapon_archetypes = {
+	; --- Klinge: Schnell, nah, gut ohne Magie ---
+	"blade": {
+		"name": "Klinge",
+		"reach": 80,
+		"speed": 0.15,
+		"base_damage_class": "light",
+		"spell_synergy": ["fire", "lightning"],
+		"upgrade_nodes": [
+			{
+				"name": "Scharfe Kante",
+				"description": "Erhoehe Basisschaden um 3.",
+				"material_cost": 2,
+				"effect_type": "damage_bonus",
+				"effect_value": 3
+			},
+			{
+				"name": "Feuer-Klinge",
+				"description": "Treffer hinterlassen 1 Brennen-Stack wenn Feuer-Element aktiv.",
+				"material_cost": 3,
+				"effect_type": "spell_synergy_burning",
+				"effect_value": 1
+			},
+			{
+				"name": "Kettenangriff",
+				"description": "Dritter Treffer in Folge trifft automatisch alle Gegner in Reichweite.",
+				"material_cost": 5,
+				"effect_type": "chain_attack",
+				"effect_value": 3
+			}
+		],
+		"rim_glow_color": "#FF4400",
+		"description": "Nahkampf-Klinge: schnell, praezise, synergiert mit Feuer und Blitz."
+	},
+
+	; --- Stab: Ausgewogen, synergiert mit allen Spells ---
+	"staff": {
+		"name": "Stab",
+		"reach": 150,
+		"speed": 0.4,
+		"base_damage_class": "medium",
+		"spell_synergy": ["fire", "ice", "lightning", "earth", "shadow", "light"],
+		"upgrade_nodes": [
+			{
+				"name": "Verlaengerter Schaft",
+				"description": "Reichweite + 40px.",
+				"material_cost": 2,
+				"effect_type": "reach_bonus",
+				"effect_value": 40
+			},
+			{
+				"name": "Universalkanal",
+				"description": "Spell-Cooldown -0.2s wenn Stab aktiv.",
+				"material_cost": 4,
+				"effect_type": "spell_cooldown_reduction",
+				"effect_value": 0.2
+			},
+			{
+				"name": "Mana-Rueckfluss",
+				"description": "Jeder Waffen-Treffer regeneriert 10% Magie-Timeout.",
+				"material_cost": 5,
+				"effect_type": "magic_regen_on_hit",
+				"effect_value": 0.1
+			}
+		],
+		"rim_glow_color": "#A044FF",
+		"description": "Universalstab: mittlere Reichweite, passt zu jedem Spell."
+	},
+
+	; --- Kanone: Fernkampf, langsam, Synergie Eis+Erde ---
+	"cannon": {
+		"name": "Kanone",
+		"reach": 500,
+		"speed": 0.6,
+		"base_damage_class": "heavy",
+		"spell_synergy": ["ice", "earth"],
+		"upgrade_nodes": [
+			{
+				"name": "Groesseres Kaliber",
+				"description": "Projektil-AoE-Radius + 20px.",
+				"material_cost": 3,
+				"effect_type": "projectile_aoe_bonus",
+				"effect_value": 20
+			},
+			{
+				"name": "Frost-Munition",
+				"description": "Treffer hinterlassen 1 Verlangsamungs-Stack.",
+				"material_cost": 3,
+				"effect_type": "spell_synergy_slow",
+				"effect_value": 1
+			},
+			{
+				"name": "Durchschlag",
+				"description": "Projektile durchdringen einen Gegner und treffen weiter hinten.",
+				"material_cost": 6,
+				"effect_type": "pierce",
+				"effect_value": 1
+			}
+		],
+		"rim_glow_color": "#8B5E3C",
+		"description": "Fernkampf-Kanone: hoher Schaden, aber langsam. Synergie Eis und Erde."
+	},
+
+	; --- Klaue: Sehr schnell, nah, Schatten-Synergie ---
+	"claw": {
+		"name": "Klaue",
+		"reach": 60,
+		"speed": 0.1,
+		"base_damage_class": "light",
+		"spell_synergy": ["shadow"],
+		"upgrade_nodes": [
+			{
+				"name": "Giftige Spitze",
+				"description": "Erster Treffer eines Angriffs-Bursts hinterlasst 1 Blind-Stack.",
+				"material_cost": 3,
+				"effect_type": "spell_synergy_blind",
+				"effect_value": 1
+			},
+			{
+				"name": "Schattenschritt",
+				"description": "Jeder Treffer reduziert Dodge-Cooldown um 0.05s.",
+				"material_cost": 3,
+				"effect_type": "dodge_cooldown_reduction_on_hit",
+				"effect_value": 0.05
+			},
+			{
+				"name": "Rasender Angriff",
+				"description": "Vierter Treffer in 1s gibt kurze Unverwundbarkeit (0.3s).",
+				"material_cost": 5,
+				"effect_type": "burst_invincibility",
+				"effect_value": 0.3
+			}
+		],
+		"rim_glow_color": "#6622AA",
+		"description": "Schnelle Klaue: maximales Tempo, Synergie mit Schatten-Spells."
+	},
+
+	; --- Schild-Arm: Defensiv, sehr langsam ---
+	"shield_arm": {
+		"name": "Schild-Arm",
+		"reach": 70,
+		"speed": 0.8,
+		"base_damage_class": "medium",
+		"spell_synergy": ["light", "ice"],
+		"upgrade_nodes": [
+			{
+				"name": "Verstaerktes Schild",
+				"description": "Schadens-Reduktion bei Blocken von 30% auf 50% erhoehen.",
+				"material_cost": 3,
+				"effect_type": "block_damage_reduction",
+				"effect_value": 0.5
+			},
+			{
+				"name": "Lichtreflektion",
+				"description": "Geblockte Spells haben 25% Chance zurueckgeworfen zu werden.",
+				"material_cost": 4,
+				"effect_type": "spell_reflect_chance",
+				"effect_value": 0.25
+			},
+			{
+				"name": "Frost-Schild",
+				"description": "Blocker hinterlaesst 1 Verlangsamungs-Stack auf Angreifer.",
+				"material_cost": 4,
+				"effect_type": "block_slow_attacker",
+				"effect_value": 1
+			}
+		],
+		"rim_glow_color": "#FFD700",
+		"description": "Schild-Arm: defensiv, sehr langsam, Synergie Licht und Eis."
+	}
+}
+
+; --- Standard-Waffe beim Spielstart ---
+default_weapon = "blade"
+
+; --- Material-Konfiguration ---
+; Wie viele Materialien ein zerstoerter Tile maximal droppen kann.
+; Eigentliches Drop-Verhalten ist in item_config.tres.
+max_materials_per_tile = 1
