@@ -18,11 +18,6 @@ config/icon="res://icon.svg"
 [autoload]
 
 ModLoader="*res://scripts/mod_loader.gd"
-; TODO Phase 2+3: Folgende AutoLoads werden in späteren Phasen implementiert
-; ArenaStateManager="*res://scripts/arena_state_manager.gd"
-; DamageSystem="*res://scripts/damage_system.gd"
-; MusicManager="*res://scripts/music_manager.gd"
-; SfxManager="*res://scripts/sfx_manager.gd"
 
 [display]
 

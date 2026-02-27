@@ -5,6 +5,33 @@
         "git add": true,
         "git commit": true,
         "godot": true,
-        "git push": true
+        "git push": true,
+        "set": true,
+        "mv": true,
+        "true": true,
+        "/^set -e\ncd /home/heox/godot_workspace/high-fire\n# Dateiendungen zurück auf \\.md\nmv AGENTS\\.md AGENTS\\.md\nmv DESIGN\\.md DESIGN\\.md\nmv MOODBOARD\\.md MOODBOARD\\.md\nmv PLAN_PHASES\\.md PLAN_PHASES\\.md\nmv TOOLS\\.md TOOLS\\.md\nmv \\.github/PULL_REQUEST_TEMPLATE\\.md \\.github/pull_request_template\\.md\n\n# Referenzen zurücksetzen\npython3 - << 'PY'\nfrom pathlib import Path\nroot = Path\\('\\.'\\)\npatterns = \\['\\*\\.md','\\*\\.gd','\\*\\.tscn','\\*\\.tres','\\*\\.godot','\\*\\.txt','\\*\\.cfg','\\*\\.ini','\\*\\.json'\\]\nfiles = set\\(\\)\nfor pat in patterns:\n    for p in root\\.rglob\\(pat\\):\n        if '\\.git' in p\\.parts or '\\.godot/imported' in p\\.parts:\n            continue\n        if p\\.is_file\\(\\):\n            files\\.add\\(p\\)\nfor p in sorted\\(files\\):\n    try:\n        s = p\\.read_text\\(encoding='utf-8'\\)\n    except Exception:\n        continue\n    ns = s\\.replace\\('\\.md', '\\.md'\\)\n    if ns != s:\n        p\\.write_text\\(ns, encoding='utf-8'\\)\nPY\n\ngit -C /home/heox/godot_workspace/high-fire status -sb$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^set -e\ncd /home/heox/godot_workspace/high-fire\npython3 - << 'PY'\nfrom pathlib import Path\nimport re\nroot = Path\\('\\.'\\)\nmds = list\\(root\\.rglob\\('\\*\\.md'\\)\\)\nlink_re = re\\.compile\\(r'\\\\\\[\\[\\^\\\\\\]\\]\\*\\\\\\]\\\\\\(\\(\\[\\^\\)\\]\\+\\)\\\\\\)'\\)\nproblems = \\[\\]\nfor f in mds:\n    text = f\\.read_text\\(encoding='utf-8'\\)\n    for target in link_re\\.findall\\(text\\):\n        if target\\.startswith\\('http://'\\) or target\\.startswith\\('https://'\\):\n            continue\n        target_path = target\\.split\\('#',1\\)\\[0\\]\n        if not target_path:\n            continue\n        p = \\(f\\.parent / target_path\\)\\.resolve\\(\\)\n        if not p\\.exists\\(\\):\n            problems\\.append\\(\\(str\\(f\\), target\\)\\)\nif problems:\n    print\\('BROKEN_LINKS'\\)\n    for src,t in problems:\n        print\\(f'\\{src\\} -> \\{t\\}'\\)\nelse:\n    print\\('OK_NO_BROKEN_INTERNAL_MD_LINKS'\\)\nPY$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^cd /home/heox/godot_workspace/high-fire && python3 - << 'PY'\nfrom pathlib import Path\nimport re\nroot=Path\\('\\.'\\)\nmds=list\\(root\\.rglob\\('\\*\\.md'\\)\\)\nlink_re=re\\.compile\\(r'\\\\\\[\\[\\^\\\\\\]\\]\\*\\\\\\]\\\\\\(\\(\\[\\^\\)\\]\\+\\)\\\\\\)'\\)\nproblems=\\[\\]\nfor f in mds:\n    text=f\\.read_text\\(encoding='utf-8'\\)\n    for target in link_re\\.findall\\(text\\):\n        if target\\.startswith\\('http://'\\) or target\\.startswith\\('https://'\\): continue\n        target_path=target\\.split\\('#',1\\)\\[0\\]\n        if not target_path: continue\n        p=\\(f\\.parent/target_path\\)\\.resolve\\(\\)\n        if not p\\.exists\\(\\): problems\\.append\\(\\(f,target\\)\\)\nprint\\('OK_NO_BROKEN_INTERNAL_MD_LINKS' if not problems else 'BROKEN_LINKS'\\)\nfor f,t in problems:\n    print\\(f'\\{f\\} -> \\{t\\}'\\)\nPY$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^cd /home/heox/godot_workspace/high-fire && python3 - << 'PY'\nfrom pathlib import Path\nimport re\ntext=Path\\('PLAN_PHASES\\.md'\\)\\.read_text\\(encoding='utf-8'\\)\n# crude split by stream headings\nparts=re\\.split\\(r'\\(\\^#### \\.\\*\\?\\$\\)', text, flags=re\\.M\\)\nissues=\\[\\]\nfor i in range\\(1,len\\(parts\\),2\\):\n    head=parts\\[i\\]\\.strip\\(\\)\n    body=parts\\[i\\+1\\]\n    if '✅ ABGESCHLOSSEN' in head:\n        unchecked=len\\(re\\.findall\\(r'\\^- \\\\\\[ \\\\\\]', body, flags=re\\.M\\)\\)\n        if unchecked:\n            issues\\.append\\(\\(head, unchecked\\)\\)\nprint\\('CLOSED_STREAMS_WITH_UNCHECKED', len\\(issues\\)\\)\nfor h,c in issues:\n    print\\(f'\\{c\\}\\\\t\\{h\\}'\\)\nPY$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^cd /home/heox/godot_workspace/high-fire && python3 - << 'PY'\nfrom pathlib import Path\nimport re\ntext=Path\\('PLAN_PHASES\\.md'\\)\\.read_text\\(encoding='utf-8'\\)\nparts=re\\.split\\(r'\\(\\^#### \\.\\*\\?\\$\\)', text, flags=re\\.M\\)\nissues=\\[\\]\nfor i in range\\(1,len\\(parts\\),2\\):\n    head=parts\\[i\\]\\.strip\\(\\)\n    body=parts\\[i\\+1\\]\n    if '✅ ABGESCHLOSSEN' in head:\n        unchecked=len\\(re\\.findall\\(r'\\^- \\\\\\[ \\\\\\]', body, flags=re\\.M\\)\\)\n        if unchecked:\n            issues\\.append\\(\\(head, unchecked\\)\\)\nprint\\('CLOSED_STREAMS_WITH_UNCHECKED', len\\(issues\\)\\)\nfor h,c in issues:\n    print\\(f'\\{c\\}\\\\t\\{h\\}'\\)\nPY\n\ngit -C /home/heox/godot_workspace/high-fire status -sb$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^python3 tools/plan_consistency_check\\.py; echo EXIT:\\$\\?$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }
