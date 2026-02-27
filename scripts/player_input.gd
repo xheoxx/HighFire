@@ -61,9 +61,11 @@ func get_move_vector() -> Vector2:
 	)
 
 	# Wenn ein digitaler Input aktiv ist, diesen bevorzugen.
-	# (D-Pad hat Vorrang vor Analogstick – vermeidet Konflikte)
+	# (D-Pad hat Vorrang vor Analogstick – vermeidet Konflikte).
+	# WICHTIG: Nicht normalisieren, sonst gehen analoge Zwischenwerte verloren
+	# und die Bewegung wird wieder auf 0/1 quantisiert.
 	if digital.length_squared() > 0.01:
-		return digital.normalized()
+		return digital.limit_length(1.0)
 
 	# --- Analogstick auslesen (falls Joypad vorhanden) ---
 	# Nur lesen wenn ein Joypad zugewiesen ist.
