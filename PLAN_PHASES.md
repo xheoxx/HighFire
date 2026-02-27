@@ -474,7 +474,7 @@ project.godot:
 - ✅ Input-System vorbereitet
 - ✅ Resource-Infrastruktur komplett
 
-**Empfohlener nächster Stream:** Phase 2 Stream A (Motion-Input Parser)
+**Empfohlener nächster Schritt:** Phase 2 Stream B lokal validieren (Akzeptanzkriterien abhaken), danach Stream 2C starten
 
 ---
 
@@ -556,8 +556,8 @@ const COMBOS = {
 
 ---
 
-#### Stream B – Spellcrafting 🔄 IN ARBEIT
-**Branch**: `copilot/fix-authentication-issue`
+#### Stream B – Spellcrafting 🔄 IN ARBEIT (Code in `main`, Lokaltest offen)
+**Branch**: `copilot/fix-authentication-issue` – gemergt in `main` (PR #6)
 **Implementierte Dateien**: `scripts/spell_system.gd`, `scripts/spell_projectile.gd`, `scenes/spell_projectile.tscn`, `scenes/magic_gauge_ui.tscn`, `scripts/magic_gauge_ui.gd`, `scripts/status_effect_component.gd`, `scripts/reaction_checker.gd`, `scenes/status_effect_hud.tscn`, `scripts/status_effect_hud.gd`, `scripts/item_system.gd`, `scripts/item_pickup.gd`, `scenes/item_pickup.tscn`, `scenes/ui/item_bar_ui.tscn`, `scripts/item_bar_ui.gd`
 **Modifizierte Dateien**: `scripts/tile.gd` (Item-Drop-Trigger bei DESTROYED ergänzt)
 
