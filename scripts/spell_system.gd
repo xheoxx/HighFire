@@ -372,8 +372,8 @@ func _spawn_mirror_clone(position: Vector2) -> void:
 	var clone: ColorRect = ColorRect.new()
 	clone.size = Vector2(24, 24)
 	clone.position = position - Vector2(12, 12)
-	if _player:
-		clone.color = _player.color_rect.color if _player.has_node("ColorRect") else Color.GRAY
+	var player_color_rect: ColorRect = _player.get_node_or_null("ColorRect") as ColorRect if _player else null
+	clone.color = player_color_rect.color if player_color_rect else Color.GRAY
 	clone.color.a = 0.6
 	get_tree().current_scene.add_child(clone)
 

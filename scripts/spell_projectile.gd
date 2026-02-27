@@ -59,6 +59,8 @@ var _hit: bool = false
 
 # Richtet Visuell und Kollisions-Maske ein.
 func _ready() -> void:
+	# Zur Gruppe hinzufuegen damit dodge_crystal-Proximity-Check funktioniert
+	add_to_group("spell_projectiles")
 	# Kollisions-Layer: Projektile (Layer 3)
 	collision_layer = 4   # Layer 3 = Bit 2
 	# Kollisions-Maske: trifft Spieler (Layer 1) und Terrain (Layer 2)

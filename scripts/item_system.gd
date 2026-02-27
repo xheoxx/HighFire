@@ -210,7 +210,7 @@ func _check_life_shard(player_id: int, player: Player, item: Dictionary) -> void
 	var threshold: float = float(_config.get("life_shard_hp_threshold") if _config.get("life_shard_hp_threshold") != null else 0.3)
 	var heal_amount: int = int(_config.get("life_shard_heal_amount") if _config.get("life_shard_heal_amount") != null else 25)
 
-	if float(player.current_hp) / float(player.max_hp) <= threshold:
+	if player.max_hp > 0 and float(player.current_hp) / float(player.max_hp) <= threshold:
 		player.heal(heal_amount)
 		_consume_item(player_id, item)
 

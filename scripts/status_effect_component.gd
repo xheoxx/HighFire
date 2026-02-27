@@ -276,8 +276,7 @@ func _apply_ongoing_effects() -> void:
 	# Einfrieren: Physics-Prozess des Spielers blockieren
 	if _player:
 		var should_freeze: bool = is_frozen()
-		if _player.set_physics_process.is_valid():
-			_player.set_physics_process(not should_freeze)
+		_player.set_physics_process(not should_freeze)
 
 	# Betaeubung + Einfrieren: Input blockieren
 	if _player_input:
@@ -439,7 +438,7 @@ func _enforce_debuff_cap(new_effect_id: String) -> void:
 	if debuff_ids.size() < _max_debuff_types:
 		return
 
-	# Aeltesten Debuff bestimmen und entfernen (Stack mit laengster Timer-Restzeit im ersten Stack)
+	# Aeltesten Debuff bestimmen und entfernen (Stack mit kuerzester Timer-Restzeit = laeuft als naechstes ab)
 	var oldest_id: String = debuff_ids[0]
 	var oldest_timer: float = 999.0
 	for eff_id in debuff_ids:
