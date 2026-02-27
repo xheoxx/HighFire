@@ -72,9 +72,14 @@ func get_move_vector() -> Vector2:
 			Input.get_joy_axis(joypad_index, JOY_AXIS_LEFT_X),
 			Input.get_joy_axis(joypad_index, JOY_AXIS_LEFT_Y)
 		)
-		# Deadzone: alles unter ANALOG_DEADZONE ignorieren
-		if analog.length() > ANALOG_DEADZONE:
-			return analog.normalized()
+		# Deadzone: alles unter ANALOG_DEADZONE ignorieren.
+		# Oberhalb der Deadzone wird die Auslenkung auf 0..1 remapped,
+		# damit der Spieler mit halbem Stick auch langsamer laeuft.
+		var analog_len: float = analog.length()
+		if analog_len > ANALOG_DEADZONE:
+			var remapped_strength: float = (analog_len - ANALOG_DEADZONE) / (1.0 - ANALOG_DEADZONE)
+			remapped_strength = clamp(remapped_strength, 0.0, 1.0)
+			return analog.normalized() * remapped_strength
 
 	return Vector2.ZERO
 
