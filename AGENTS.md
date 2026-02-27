@@ -145,6 +145,52 @@ Da kein Godot-Editor in der Cloud läuft, gilt folgende Teststrategie:
 
 Für Scripts die State-Logik enthalten (z. B. `arena_state_manager.gd`, `tile.gd`): Testfälle als Kommentar am Ende der Datei dokumentieren, damit der Auftraggeber sie lokal schnell ausführen kann.
 
+## Execution Checklist (verbindlich)
+
+Diese Checkliste ist verbindlich für die tägliche Umsetzung und ergänzt `PLAN_PHASES.md` um einen schnellen, operativen Ablauf.
+
+### 1) Stream-Start (Pflicht)
+- Ziel-Stream in `PLAN_PHASES.md` prüfen (Dateiliste, Abhängigkeiten, Akzeptanzkriterien)
+- Änderungen nur in den vorgesehenen Dateien/Ordnern umsetzen
+- Bei Konflikt mit `DESIGN.md` oder `AGENTS.md` nicht direkt umsetzen, erst klären
+
+### 2) Cloud-Implementierung
+- `.gd` / `.tscn` / `.tres` vollständig implementieren
+- Werte aus Resources lesen (keine neuen hardcodierten Balance-Werte)
+- Signals/Interfaces stabil halten (keine unnötigen Umbenennungen)
+
+### 3) Cloud-Validierung (Headless)
+- Syntax-Check pro geändertem Script: `godot --headless --check-only -s scripts/datei.gd`
+- Szenen-/Import-Check nach `.tscn`-Änderungen: `godot --headless --import`
+- Gefundene Fehler beheben, dann Checks erneut ausführen
+
+### 4) Lokaler Pflicht-Test (Godot-Editor)
+- Gameplay-Feel prüfen (Input, Timing, Kamera, HUD-Lesbarkeit)
+- Controller-/UI-Verhalten im Zielkontext testen (2–4 Spieler falls relevant)
+- Audio/VFX/Mix nur nach lokalem Lauf als „fertig" markieren
+
+### 5) Abnahme-Gate pro Stream
+- Alle Akzeptanzkriterien im Stream manuell abhaken
+- Stream-Status in `PLAN_PHASES.md` auf `✅ ABGESCHLOSSEN` setzen
+- Kurzen Testnachweis notieren (was wurde lokal geprüft)
+
+### 6) Schnell-Matrix nach Phase
+
+| Phase | Cloud-Anteil | Lokal-Pflicht |
+|------|--------------|---------------|
+| Phase 0 / 0B | Sehr hoch (Design/Doku) | Optional |
+| Phase 1 | Hoch | Ja (Movement/Collision/Input-Feel) |
+| Phase 2 | Hoch | Ja (Combat-Timing/Balance/HUD-Readability) |
+| Phase 3 | Mittel-Hoch | Ja (Multiplayer-Flow, Kamera, Menüs) |
+| Phase 4 | Mittel | Ja (Polish: Juice, Audio, VFX, Accessibility) |
+| Phase 5 | Mittel | Ja (Builds, Online, Steam, QA) |
+
+### 7) Definition of Done (DoD)
+- Code in Cloud sauber + headless validiert
+- Lokal in Godot verifiziert
+- Planstatus/Doku aktualisiert
+- Bereit für PR
+
 ## Umgang mit Merge-Konflikten
 
 **Vorbeugen:**

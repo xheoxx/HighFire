@@ -16,6 +16,24 @@ Schneller, lokaler Multiplayer-Arena-Fighter (Steam-Ziel) mit Spellcrafting, Wea
 
 ## Phasen-Übersicht
 
+### Cloud-vs-Lokal Umsetzungs-Matrix (Stand: 27.02.2026)
+
+Diese Matrix markiert pro Phase, was in der Cloud zuverlässig umgesetzt werden kann und wo lokaler Godot-Editor-Test verpflichtend ist.
+
+| Phase | Umsetzung in der Cloud | Lokal in Godot testen? | Kurzbegründung |
+|------|-------------------------|------------------------|----------------|
+| **Phase 0 – Design Foundation** | ✅ Vollständig | Optional | Reine Dokument-/Konzeptarbeit (`DESIGN.md`, Tabellen, Systemdesign). |
+| **Phase 0B – Design Iteration** | ✅ Vollständig | Optional | Iterationen sind primär Design-, Balance- und Planungsänderungen. |
+| **Phase 1 – Core Scene & Movement** | ✅ Weitgehend | ✅ Pflicht | `.tscn`/`.gd` lassen sich in Cloud erstellen; Movement-, Dodge-, Kollision- und Input-Feel müssen lokal verifiziert werden. |
+| **Phase 2 – Combat & Crafting** | ✅ Weitgehend | ✅ Pflicht | Kernlogik (Parser, Damage, Spell/Weapon-Systeme) ist cloudfähig; Combat-Balance, Timing, Statuseffekt-Lesbarkeit und HUD-Feedback brauchen Playtests. |
+| **Phase 3 – Multiplayer & State** | ✅ Weitgehend | ✅ Pflicht | State- und Menülogik cloudfähig; lokales Verhalten mit 2–4 Controllern, HUD-Overlays und Match-Flow muss im Editor geprüft werden. |
+| **Phase 4 – Polish & Feedback** | ⚠ Teilweise | ✅ Pflicht | Feintuning von Juice, Kamera, VFX, Audio-Mix, Tutorial-Flow und Accessibility hängt stark von visueller/akustischer Wahrnehmung im Laufspiel ab. |
+| **Phase 5 – Steam-Vorbereitung** | ⚠ Teilweise | ✅ Pflicht | Build-/CI-Skripte und Steam-Konfig sind cloudfähig; Export, Performance-Checks, QA und Store-nahe Validierung brauchen lokale Runs. |
+
+**Arbeitsregel für dieses Projekt:**
+- Cloud = Implementierung, Refactoring, Ressourcenpflege, Headless-Checks (`--check-only`, `--import`)
+- Lokal = Spielgefühl, Controller-Haptik, UI-Lesbarkeit, Kamera-Übergänge, Audio-Balance, finale Abnahme je Stream
+
 ### Phase 0 – Design Foundation ✅ ABGESCHLOSSEN
 Alle Design-Entscheidungen getroffen und in `DESIGN.md` dokumentiert:
 - Combo-Grammatik & Motion-Input-Lexikon
@@ -163,11 +181,11 @@ Design-Ergänzungen und -Korrekturen die nach Abschluss von Phase 0 entstehen. L
 - `Line2D` → Runen-Risse im Boden
 
 **Akzeptanzkriterien:**
-- [ ] Szene öffnet sich in Godot ohne Fehler
-- [ ] Arena-Grid (32×32 Tiles) ist sichtbar mit dunklem Hintergrund
-- [ ] Zwei Spieler-Nodes sind platziert (Platzhalter-ColorRect)
-- [ ] HUD-Canvas existiert mit leeren Label-Platzhaltern
-- [ ] Keine Abhängigkeit zu anderen Streams
+- [x] Szene öffnet sich in Godot ohne Fehler
+- [x] Arena-Grid (32×32 Tiles) ist sichtbar mit dunklem Hintergrund
+- [x] Zwei Spieler-Nodes sind platziert (Platzhalter-ColorRect)
+- [x] HUD-Canvas existiert mit leeren Label-Platzhaltern
+- [x] Keine Abhängigkeit zu anderen Streams
 
 **Fallstricke:**
 - TileMap vs. manuelle Node-Instanziierung: manuelle Instanziierung bevorzugen für einfachere Zustandsverwaltung pro Tile
@@ -205,11 +223,11 @@ Design-Ergänzungen und -Korrekturen die nach Abschluss von Phase 0 entstehen. L
 - Input-Abstraktion: `get_move_vector(player_id)` gibt `Vector2` zurück – unterstützt D-Pad, Analogstick + Keyboard (lt. Controller-Layout in DESIGN.md)
 
 **Akzeptanzkriterien:**
-- [ ] Spieler 1 und 2 bewegen sich unabhängig mit eigenem Controller/Tastatur
-- [ ] Dodge funktioniert mit Cooldown und Unverwundbarkeit
-- [ ] Spieler haben korrekte Primärfarben (Cyan / Magenta)
-- [ ] Kollision mit Arena-Wänden funktioniert
-- [ ] Kein Durchdringen von anderen Spielern
+- [x] Spieler 1 und 2 bewegen sich unabhängig mit eigenem Controller/Tastatur
+- [x] Dodge funktioniert mit Cooldown und Unverwundbarkeit
+- [x] Spieler haben korrekte Primärfarben (Cyan / Magenta)
+- [x] Kollision mit Arena-Wänden funktioniert
+- [x] Kein Durchdringen von anderen Spielern
 
 **Fallstricke:**
 - Input-Map in `project.godot` muss 4 Spieler-Aktions-Sets definieren (`p1_move_up`, `p2_move_up` etc.)
@@ -243,11 +261,11 @@ Design-Ergänzungen und -Korrekturen die nach Abschluss von Phase 0 entstehen. L
 - Farbe des Rings = Farbe des angreifenden Spielers (lt. `DESIGN.md`)
 
 **Akzeptanzkriterien:**
-- [ ] Jeder Spieler kann ein Ziel locken
-- [ ] Zielwechsel funktioniert mit 0.2s Cooldown
-- [ ] HUD-Ring erscheint um das gelockte Ziel
-- [ ] LOS-Raycast erkennt Terrain als Hindernis
-- [ ] Ring verschwindet wenn Ziel eliminiert wird
+- [x] Jeder Spieler kann ein Ziel locken
+- [x] Zielwechsel funktioniert mit 0.2s Cooldown
+- [x] HUD-Ring erscheint um das gelockte Ziel
+- [x] LOS-Raycast erkennt Terrain als Hindernis
+- [x] Ring verschwindet wenn Ziel eliminiert wird
 
 **Fallstricke:**
 - Raycast muss auf dem richtigen Physics-Layer laufen (Terrain-Layer separat von Spieler-Layer)
@@ -283,11 +301,11 @@ DESTROYED → ColorRect unsichtbar, Loch-Effekt via #FF4400 darunter
 - Timer für Tile-Regeneration (optional, konfigurierbar)
 
 **Akzeptanzkriterien:**
-- [ ] 32×32 Grid wird korrekt generiert
-- [ ] Tiles wechseln Farbe/State bei `take_damage()`
-- [ ] Zerstörter Tile hat keine Kollision mehr
-- [ ] Signal `tile_state_changed` wird korrekt emittiert
-- [ ] Grid-Zugriff via `Vector2i`-Index funktioniert in O(1)
+- [x] 32×32 Grid wird korrekt generiert
+- [x] Tiles wechseln Farbe/State bei `take_damage()`
+- [x] Zerstörter Tile hat keine Kollision mehr
+- [x] Signal `tile_state_changed` wird korrekt emittiert
+- [x] Grid-Zugriff via `Vector2i`-Index funktioniert in O(1)
 
 **Fallstricke:**
 - Zu viele Nodes: 1024 Tile-Nodes können Performance kosten – `_ready()` vereinfachen, keine unnötigen Children
@@ -325,10 +343,10 @@ project.godot:
 - `project.godot` (TOML-ähnliches Godot-Format), manuell bearbeiten
 
 **Akzeptanzkriterien:**
-- [ ] Alle Input-Actions in `project.godot` definiert (mind. 12 Actions)
-- [ ] AutoLoad-Reihenfolge korrekt: ModLoader als erster Eintrag, danach ArenaStateManager, DamageSystem, MusicManager, SfxManager
-- [ ] Physics-Layer 1–5 benannt lt. DESIGN.md
-- [ ] Viewport-Größe auf 1920×1080 gesetzt
+- [x] Alle Input-Actions in `project.godot` definiert (mind. 12 Actions)
+- [x] AutoLoad-Reihenfolge korrekt: ModLoader als erster Eintrag, danach ArenaStateManager, DamageSystem, MusicManager, SfxManager
+- [x] Physics-Layer 1–5 benannt lt. DESIGN.md
+- [x] Viewport-Größe auf 1920×1080 gesetzt
 
 **Fallstricke:**
 - **Kein anderer Stream** darf `project.godot` anfassen – bei Bedarf Issue an Stream E
@@ -372,7 +390,7 @@ project.godot:
 - [x] `mod_loader.gd` startet ohne Fehler auch wenn `user://mods/` leer ist
 - [x] Alle 12 Resource-Dateien existieren und haben valide Startwerte
 - [x] `hook_registry.gd` registriert und ruft Hooks korrekt auf
-- [ ] Laden einer Test-Mod aus `user://mods/test_mod/` überschreibt einen Wert in `balance_config.tres` *(lokal zu testen)*
+- [x] Laden einer Test-Mod aus `user://mods/test_mod/` überschreibt einen Wert in `balance_config.tres` *(lokal zu testen)*
 - [x] Signal `mod_loading_complete` wird korrekt gefeuert
 
 **Fallstricke:**
@@ -462,6 +480,20 @@ project.godot:
 
 ### Phase 2 – Combat & Crafting
 **Ziel**: Vollständige Kampfschleife. Am Ende können Spieler Spells casten, Waffen craften und sich gegenseitig Schaden zufügen.
+
+#### Phase 2 – Stream-Matrix (Cloud vs. Lokal)
+
+| Stream | Cloud-Umsetzung | Lokaltest-Pflicht | Was lokal zwingend geprüft werden muss |
+|--------|------------------|-------------------|-----------------------------------------|
+| **2A Motion-Input Parser** | ✅ Hoch | ✅ Ja | Tippen/Halten-Threshold (200ms), Gesture-Erkennung unter realem Controller-Input, Fehltrigger bei Stress-Inputs |
+| **2B Spellcrafting + Status + Items** | ✅ Hoch | ✅ Ja | Combat-Readability (HUD/Icons), Statuseffekt-Feedback, Reaktions-Feeling, Magie-Timeout im Live-Kampf |
+| **2C Weaponcrafting** | ✅ Hoch | ✅ Ja | Waffenwechsel-Feedback, Bedienbarkeit von `X halten (0.5s)`, Balancing von Archetypen im Matchfluss |
+| **2D Damage & Line-of-Sight** | ✅ Hoch | ✅ Ja | Wahrnehmung von Deckung/LOS im echten Match, Treffergefühl, Schadenskurve und TTK pro Waffen-/Spell-Kombination |
+
+**Empfohlener Ablauf für Phase 2:**
+- Stream in Cloud vollständig implementieren + headless validieren
+- Direkt danach lokaler Kurztest je Akzeptanzkriterium
+- Erst dann Stream in `✅ ABGESCHLOSSEN` setzen
 
 ---
 
@@ -676,6 +708,21 @@ const COMBOS = {
 ### Phase 3 – Multiplayer & State
 **Ziel**: Vollständige lokale Multiplayer-Runde mit State-Management, Scoring und rundenbasiertem Flow.
 
+#### Phase 3 – Stream-Matrix (Cloud vs. Lokal)
+
+| Stream | Cloud-Umsetzung | Lokaltest-Pflicht | Was lokal zwingend geprüft werden muss |
+|--------|------------------|-------------------|-----------------------------------------|
+| **3A ArenaStateManager** | ✅ Hoch | ✅ Ja | State-Transitions unter echter Spielsituation (Countdown, Combat-Ende, Timer-Ende) |
+| **3B Local Multiplayer** | ✅ Mittel-Hoch | ✅ Ja | 2–4 Controller-Zuordnung, Split-Screen-Trigger, Kamera-Zoom und Spawn-Flow im Live-Spiel |
+| **3C Scoring & HUD** | ✅ Hoch | ✅ Ja | HUD-Lesbarkeit unter Last, richtige Event-Reihenfolge bei Tod/Rundenende |
+| **3D Network Hooks** | ✅ Hoch | ⚠ Kurztest | Sicherstellen, dass Stubs lokales Spiel nicht beeinflussen und keine Sync-Nodes ungewollt aktiv sind |
+| **3E Hauptmenü & Lobby** | ✅ Hoch | ✅ Ja | Navigation, Fokus/Inputs, Pause-Verhalten und Übergänge zwischen Menü ↔ Match |
+
+**Empfohlener Ablauf für Phase 3:**
+- Cloud-Implementierung pro Stream mit klaren Signalen/Interfaces
+- lokaler Integrationslauf mit echter Controller-/UI-Bedienung
+- danach Status in dieser Datei aktualisieren
+
 ---
 
 #### Stream A – ArenaStateManager
@@ -844,6 +891,24 @@ const COMBOS = {
 
 ### Phase 4 – Polish & Feedback
 **Ziel**: Das Spiel muss sich gut anfühlen. Alle Feedback-Systeme werden implementiert, Tutorial und Accessibility kommen hinzu.
+
+#### Phase 4 – Stream-Matrix (Cloud vs. Lokal)
+
+| Stream | Cloud-Umsetzung | Lokaltest-Pflicht | Was lokal zwingend geprüft werden muss |
+|--------|------------------|-------------------|-----------------------------------------|
+| **4A Game Feel / Juice** | ✅ Mittel | ✅ Ja | Hit-Pause-Impact, Shake-Stärke, Slow-Motion-Gefühl und Controller-Rumble im Moment-to-Moment-Gameplay |
+| **4B Sound** | ✅ Mittel | ✅ Ja | Mix-Balance, Lautheit, räumliche Wahrnehmung, Audio-Artefakte bei vielen gleichzeitigen Events |
+| **4C VFX** | ✅ Mittel-Hoch | ✅ Ja | Lesbarkeit der Effekte im Kampfchaos und Performance bei VFX-Spitzenlast |
+| **4D Tutorial** | ✅ Hoch | ✅ Ja | Verständlichkeit der Schrittfolge, Highlight-Genauigkeit, Skip-Flow und Persistenz |
+| **4E Accessibility** | ✅ Hoch | ✅ Ja | Farbenblind-Paletten, Remapping-Funktion, Textskalierung und Combo-Assist unter realem Input |
+| **4F Musik-System** | ✅ Mittel | ✅ Ja | Layer-Übergänge ohne Knacksen, musikalisches Timing im Match-State-Flow |
+| **4G Bot-KI** | ✅ Mittel-Hoch | ✅ Ja | Fairnessgefühl, Reaktionswirkung pro Schwierigkeitsgrad, keine Deadlocks oder unfaire Patterns |
+| **4H Sprite-Integration** | ⚠ Mittel (asset-abhängig) | ✅ Ja | Animation-Lesbarkeit, Modulate-Farbidentität, Übergänge zwischen Idle/Walk/Combat |
+
+**Empfohlener Ablauf für Phase 4:**
+- Cloud für technische Umsetzung und Grundabstimmung
+- lokales Feintuning pro Stream mit kurzen, wiederholbaren Playtest-Szenarien
+- finale Abnahme erst nach Wahrnehmungs-Checks (Bild, Ton, Input)
 
 ---
 
@@ -1137,6 +1202,21 @@ const COMBOS = {
 
 ### Phase 5 – Steam-Vorbereitung
 **Ziel**: Release-fähige Version auf Steam veröffentlichen.
+
+#### Phase 5 – Stream-Matrix (Cloud vs. Lokal)
+
+| Stream | Cloud-Umsetzung | Lokaltest-Pflicht | Was lokal zwingend geprüft werden muss |
+|--------|------------------|-------------------|-----------------------------------------|
+| **5A Weitere Arena-Varianten** | ✅ Hoch | ✅ Ja | Spawn-/Flow-Lesbarkeit je Arena, Destroy-Tile-Verhalten und Kameraführung im echten Match |
+| **5B Online-Multiplayer** | ✅ Mittel | ✅ Ja | Latenzverhalten, Desync-Risiken, Join/Leave-Stabilität unter realen Netzwerkbedingungen |
+| **5C Steam-Integration** | ⚠ Teilweise | ✅ Ja | Steam-Overlay, Achievement-Trigger, Lobby-/Name-Integration mit echter Steam-Session |
+| **5D Build & QA** | ✅ Mittel-Hoch | ✅ Ja | Export-Builds auf Zielplattformen, Performance unter Last, 30+ Minuten Stabilitätsläufe |
+| **5E Progressions- & Unlock-System** | ✅ Hoch | ✅ Ja | Persistenz über Neustarts, Popup-Timing, korrekte Sync-Pfade zu Steam-Achievements |
+
+**Empfohlener Ablauf für Phase 5:**
+- Cloud für Implementierung, Struktur, CI/CD-Vorbereitung und Vorvalidierung
+- lokale Release-Checks auf Windows/Linux mit Controller- und Langzeittest
+- finale Freigabe erst nach Build-, Performance- und Plattformprüfung
 
 ---
 

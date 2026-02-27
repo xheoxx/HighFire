@@ -2,6 +2,28 @@
 
 Dieses Dokument sammelt externe Tools und Workflows die bei der Asset-Erstellung nützlich sind. Es ist kein verbindliches Design-Dokument – nur eine lebendige Referenz für den Auftraggeber.
 
+Verbindliche Prozessregeln, Checklisten und Umsetzungs-Gates stehen in `AGENTS.md`.
+
+---
+
+## Dokumenten-Check
+
+### Plan- und Link-Konsistenz
+Prüft automatisiert:
+- in `PLAN_PHASES.md`, ob als `✅ ABGESCHLOSSEN` markierte Streams noch offene `- [ ]`-Checkboxen enthalten
+- in allen `*.md`-Dateien, ob interne Markdown-Links auf existierende Pfade zeigen
+- ob Markdown-Dateien nur die Endung `.md` (klein) verwenden und keine `.MD`-Dateien existieren
+
+**Ausführen:**
+```bash
+python3 tools/plan_consistency_check.py
+```
+
+**Erwartung:**
+- Exit Code `0`: konsistent
+- Exit Code `1`: Inkonsistenzen gefunden
+- Exit Code `2`: Datei fehlt oder Lesefehler
+
 ---
 
 ## Musik
