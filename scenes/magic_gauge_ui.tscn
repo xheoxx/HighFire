@@ -1,0 +1,25 @@
+[gd_scene load_steps=4 format=3 uid="uid://magic_gauge_ui"]
+
+[ext_resource type="Script" path="res://scripts/magic_gauge_ui.gd" id="1_gauge"]
+
+[node name="MagicGaugeUI" type="Control"]
+script = ExtResource("1_gauge")
+custom_minimum_size = Vector2(80, 8)
+
+[node name="Background" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.1, 0.1, 0.15, 1.0)
+
+[node name="FillBar" type="ColorRect" parent="."]
+size = Vector2(80, 8)
+color = Color(0.0, 1.0, 0.8, 1.0)
+
+[node name="StatusLabel" type="Label" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_font_sizes/font_size = 7
+horizontal_alignment = 1
+vertical_alignment = 1

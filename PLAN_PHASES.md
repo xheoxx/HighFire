@@ -497,7 +497,10 @@ project.godot:
 
 ---
 
-#### Stream A – Motion-Input Parser
+#### Stream A – Motion-Input Parser ✅ ABGESCHLOSSEN
+**Branch**: `phase2/stream-a-motion-input` – gemergt in `main` (PR #5)
+**Abgeschlossene Dateien**: `scripts/motion_input_parser.gd`, `scripts/combo_chain.gd`, `scenes/combo_chain_ui.tscn`
+
 **Abhängigkeit**: Phase 1 vollständig abgeschlossen.
 
 **Zu erstellende Dateien:**
@@ -540,11 +543,11 @@ const COMBOS = {
 ```
 
 **Akzeptanzkriterien:**
-- [ ] Viertelkreis-vorwärts wird zuverlässig erkannt
-- [ ] Zeitfenster von 0.4s wird korrekt eingehalten
-- [ ] Perfect-Timing-Signal wird bei < 0.15s emittiert
-- [ ] Combo-Chain-UI zeigt jeden Input-Schritt an
-- [ ] Fehlgeschlagener Input löscht den Buffer
+- [x] Viertelkreis-vorwärts wird zuverlässig erkannt
+- [x] Zeitfenster von 0.4s wird korrekt eingehalten
+- [x] Perfect-Timing-Signal wird bei < 0.15s emittiert
+- [x] Combo-Chain-UI zeigt jeden Input-Schritt an
+- [x] Fehlgeschlagener Input löscht den Buffer
 
 **Fallstricke:**
 - D-Pad-Eingaben sind digital – kein Deadzone-Problem, aber diagonale Inputs (↓→ gleichzeitig) müssen als Sequenz erkannt werden, nicht als einzelner Frame
@@ -553,7 +556,11 @@ const COMBOS = {
 
 ---
 
-#### Stream B – Spellcrafting
+#### Stream B – Spellcrafting 🔄 IN ARBEIT
+**Branch**: `copilot/fix-authentication-issue`
+**Implementierte Dateien**: `scripts/spell_system.gd`, `scripts/spell_projectile.gd`, `scenes/spell_projectile.tscn`, `scenes/magic_gauge_ui.tscn`, `scripts/magic_gauge_ui.gd`, `scripts/status_effect_component.gd`, `scripts/reaction_checker.gd`, `scenes/status_effect_hud.tscn`, `scripts/status_effect_hud.gd`, `scripts/item_system.gd`, `scripts/item_pickup.gd`, `scenes/item_pickup.tscn`, `scenes/ui/item_bar_ui.tscn`, `scripts/item_bar_ui.gd`
+**Modifizierte Dateien**: `scripts/tile.gd` (Item-Drop-Trigger bei DESTROYED ergänzt)
+
 **Abhängigkeit**: Stream A dieser Phase + Phase 1 Stream F (ModLoader, damit `spell_definitions.tres` / `spell_values.tres` zur Verfügung stehen).
 
 > **Kein Panel, kein Inventar.** Die Combo-Eingabe selbst ist der Spell. Alle Werte kommen aus `spell_definitions.tres` und `spell_values.tres` (angelegt von Phase 1 Stream F).
