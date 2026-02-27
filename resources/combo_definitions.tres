@@ -27,10 +27,15 @@ mode_r_sequences = {
 	"UP,RIGHT": "light_beam"
 }
 
-; --- Modus-B-Sequenz-Tabelle (maechtisgte Combos, 3+ Eingaben) ---
-; ⚠ LEER – wird von Phase 2 Stream A nach Testphase befuellt.
-; Hier nur die Struktur vorbereiten.
-mode_b_sequences = {}
+; --- Modus-B-Sequenz-Tabelle (maechtigste Combos, 3+ Eingaben) ---
+; Start-Set fuer Phase 2A (Parser-Validierung). Werte gelten als testbar und
+; koennen in der lokalen Balancephase angepasst werden.
+mode_b_sequences = {
+	"DOWN,DOWN_RIGHT,RIGHT": "b_inferno_lance",
+	"LEFT,DOWN_LEFT,DOWN,DOWN_RIGHT,RIGHT": "b_void_sweep",
+	"UP,UP_RIGHT,RIGHT,DOWN_RIGHT,DOWN": "b_astral_fall",
+	"RIGHT,UP_RIGHT,UP,UP_LEFT,LEFT": "b_prism_break"
+}
 
 ; --- Hinweis fuer Phase 2 Stream A ---
 ; Die folgenden Felder werden von motion_input_parser.gd erwartet:

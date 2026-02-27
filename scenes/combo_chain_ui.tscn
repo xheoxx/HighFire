@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combo_chain.gd" id="1_combo_chain"]
+
+[node name="ComboChainUI" type="Line2D"]
+script = ExtResource("1_combo_chain")
+width = 4.0
+default_color = Color(1, 0.843137, 0, 1)
+points = PackedVector2Array(0, 0)
