@@ -158,6 +158,13 @@ func _set_state(new_state: TileState) -> void:
 	_apply_state(new_state)
 	tile_state_changed.emit(int(new_state), grid_pos)
 
+	# Item-Drop-Trigger (Phase 2B): bei DESTROYED item_system.try_drop() aufrufen.
+	# ItemSystem ist ein AutoLoad-Node (oder wird in main_arena.gd gesucht).
+	if new_state == TileState.DESTROYED:
+		var item_system: Node = get_tree().current_scene.get_node_or_null("ItemSystem")
+		if item_system and item_system.has_method("try_drop"):
+			item_system.call("try_drop", global_position)
+
 # Wendet den visuellen Zustand an (Farben, sichtbare Nodes, Kollision).
 func _apply_state(new_state: TileState) -> void:
 	match new_state:
