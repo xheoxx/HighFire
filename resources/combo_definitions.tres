@@ -47,7 +47,7 @@ mode_b_sequences = {
 ; --- Analogstick-Deadzone (fuer Richtungsquantisierung) ---
 ; Analogstick-Werte unter diesem Schwellwert werden ignoriert.
 ; D-Pad-Eingaben sind digital und benoetigen keine Deadzone.
-analog_deadzone = 0.3
+analog_deadzone = 0.195
 
 ; --- Ring-Buffer-Groesse ---
 ; Wie viele Richtungs-Inputs maximal im Buffer gespeichert werden.

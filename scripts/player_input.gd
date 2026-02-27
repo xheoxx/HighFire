@@ -18,8 +18,8 @@ const ACTION_PREFIXES: Array[String] = ["p1_", "p2_", "p3_", "p4_"]
 
 # --- Konstante: Deadzone fuer Analogstick ---
 # Werte unter diesem Betrag werden ignoriert, um Drift zu vermeiden.
-# Lt. DESIGN.md: Deadzone 0.3 fuer Analogstick-Quantisierung.
-const ANALOG_DEADZONE: float = 0.3
+# Feinere Stick-Reaktion: kleinere Deadzone fuer direkteres Laufgefuehl.
+const ANALOG_DEADZONE: float = 0.195
 
 # --- Flag: Input gesperrt ---
 # Wenn true, gibt get_move_vector() Vector2.ZERO zurueck und get_action() false.

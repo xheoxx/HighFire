@@ -70,7 +70,7 @@ const WINDOW_MODE_B: float = 0.6
 const MAX_BUFFER_SIZE: int = 8
 
 # Analogstick-Deadzone fuer Richtungsquantisierung.
-const DEFAULT_ANALOG_DEADZONE: float = 0.3
+const DEFAULT_ANALOG_DEADZONE: float = 0.195
 
 # Export: Spieler-Slot fuer Action-Prefix (0 bis 3).
 @export_range(0, 3) var player_id: int = 0
